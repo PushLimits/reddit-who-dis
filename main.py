@@ -36,7 +36,7 @@ def get_reddit_user_comments(reddit_instance, username, limit=None):
                 "subreddit": comment.subreddit.display_name,
                 "link_title": comment.submission.title,
                 "body": comment.body,
-                "created_utc": time.ctime(comment.created_utc)
+                "created_utc": comment.created_utc  # Store as float for sorting
             })
             if (i + 1) % 100 == 0:
                 print(f"  Fetched {i + 1} comments so far...")
@@ -74,7 +74,7 @@ def get_reddit_user_posts(reddit_instance, username, limit=None):
                 "subreddit": submission.subreddit.display_name,
                 "title": submission.title,
                 "selftext": submission.selftext,
-                "created_utc": time.ctime(submission.created_utc)
+                "created_utc": submission.created_utc  # Store as float for sorting
             })
             if (i + 1) % 100 == 0:
                 print(f"  Fetched {i + 1} posts so far...")
@@ -161,21 +161,22 @@ def analyze_reddit_activity_with_llm(
     all_activities.sort(key=lambda x: x['created_utc'], reverse=True)
     activities_for_llm = all_activities[:max_activities_for_llm]
 
+    # When formatting activities for LLM, optionally include human-readable date if desired
     formatted_activities_for_llm = []
     for activity in activities_for_llm:
         if activity["type"] == "comment":
             formatted_activities_for_llm.append(
-                f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}"
+                f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}\nCreated: {time.ctime(activity['created_utc'])}"
             )
         elif activity["type"] == "post":
             if include_post_bodies and activity["selftext"]:
                 truncated_body = activity["selftext"][:max_post_body_length]
                 formatted_activities_for_llm.append(
-                    f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nContent: {truncated_body}"
+                    f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nContent: {truncated_body}\nCreated: {time.ctime(activity['created_utc'])}"
                 )
             else:
                 formatted_activities_for_llm.append(
-                    f"Type: Post (Title Only)\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}"
+                    f"Type: Post (Title Only)\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nCreated: {time.ctime(activity['created_utc'])}"
                 )
         # Add a clear separator between activities
         formatted_activities_for_llm.append("---")
@@ -281,6 +282,7 @@ if __name__ == "__main__":
     # Fetch subreddit descriptions for context
     subreddit_descriptions = get_subreddit_descriptions(reddit, user_comments, user_posts)
 
+    # When displaying account creation date, convert to string
     try:
         redditor = reddit.redditor(target_username)
         account_creation_date = time.ctime(redditor.created_utc)
@@ -298,6 +300,7 @@ if __name__ == "__main__":
         for i, comment in enumerate(user_comments[:3]):
             print(f"\nComment {i+1} (ID: {comment['id']}) in r/{comment['subreddit']}:")
             print(f"  Body: {comment['body'][:150]}...")
+            print(f"  Created: {time.ctime(comment['created_utc'])}")
         # Display a few posts
         for i, post in enumerate(user_posts[:3]):
             print(f"\nPost {i+1} (ID: {post['id']}) in r/{post['subreddit']}:")
@@ -306,6 +309,7 @@ if __name__ == "__main__":
                 print(f"  Body: {post['selftext'][:150]}...")
             elif not analyze_post_bodies:
                 print(f"  Body: (Excluded from display and LLM analysis based on setting)")
+            print(f"  Created: {time.ctime(post['created_utc'])}")
 
         if len(user_comments) + len(user_posts) > 6:
             print(f"\n... and more activities (fetched up to {num_comments_to_fetch} comments and {num_posts_to_fetch} posts).")
