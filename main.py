@@ -92,30 +92,74 @@ def get_reddit_user_posts(reddit_instance, username, limit=None):
         print(f"An error occurred during Reddit post fetching: {e}")
         return []
 
-def get_subreddit_descriptions(reddit_instance, comments_data, posts_data):
+def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache_file=".cache/subreddit_descriptions_cache.json"):
     """
     Fetches the public descriptions for all unique subreddits found in the user's comments and posts.
+    Uses a local cache file to avoid repeated API calls. Cache entries older than 30 days are refreshed.
 
     Args:
         reddit_instance (praw.Reddit): An authenticated PRAW Reddit instance.
         comments_data (list): List of comment dictionaries.
         posts_data (list): List of post dictionaries.
+        cache_file (str): Path to the cache file (default: "subreddit_descriptions_cache.json").
 
     Returns:
         dict: Mapping of subreddit name to its public description.
     """
+    import json
+    import os
+    import time
+    from datetime import datetime, timedelta
+
     unique_subreddits = set()
     for activity in comments_data + posts_data:
         unique_subreddits.add(activity['subreddit'])
 
+    # Ensure cache directory exists
+    cache_dir = os.path.dirname(cache_file)
+    if cache_dir and not os.path.exists(cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+
+    # Load cache if it exists
+    cache = {}
+    try:
+        with open(cache_file, "r") as f:
+            cache = json.load(f)
+    except Exception:
+        pass  # No cache or failed to load
+
+    now = time.time()
+    THIRTY_DAYS = 30 * 24 * 60 * 60
     subreddit_descriptions = {}
+    updated = False
     for sub in unique_subreddits:
+        cache_entry = cache.get(sub)
+        needs_refresh = True
+        if cache_entry and isinstance(cache_entry, dict):
+            desc = cache_entry.get("desc")
+            ts = cache_entry.get("timestamp", 0)
+            if desc is not None and (now - ts) < THIRTY_DAYS:
+                subreddit_descriptions[sub] = desc
+                needs_refresh = False
+        if needs_refresh:
+            try:
+                subreddit = reddit_instance.subreddit(sub)
+                desc = subreddit.public_description or subreddit.description or "(No description available)"
+                desc_clean = desc.strip().replace("\n", " ")
+                subreddit_descriptions[sub] = desc_clean
+                cache[sub] = {"desc": desc_clean, "timestamp": now}
+                updated = True
+            except Exception as e:
+                subreddit_descriptions[sub] = "(Could not fetch description)"
+                cache[sub] = {"desc": "(Could not fetch description)", "timestamp": now}
+                updated = True
+    # Save updated cache
+    if updated:
         try:
-            subreddit = reddit_instance.subreddit(sub)
-            desc = subreddit.public_description or subreddit.description or "(No description available)"
-            subreddit_descriptions[sub] = desc.strip().replace("\n", " ")
-        except Exception as e:
-            subreddit_descriptions[sub] = "(Could not fetch description)"
+            with open(cache_file, "w") as f:
+                json.dump(cache, f)
+        except Exception:
+            pass  # Ignore cache write errors
     return subreddit_descriptions
 
 def analyze_reddit_activity_with_llm(

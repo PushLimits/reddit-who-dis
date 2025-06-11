@@ -53,6 +53,12 @@ python main.py <reddit_username> [options]
 python main.py spez --comments-limit 100 --posts-limit 100 --include-post-bodies
 ```
 
+## Caching
+
+- Subreddit descriptions are cached in `.cache/subreddit_descriptions_cache.json` to avoid repeated API calls and improve performance.
+- Cached descriptions older than 30 days are automatically refreshed.
+- The `.cache/` directory is excluded from source control.
+
 ## Caveats
 
 - **API Limits:**  
