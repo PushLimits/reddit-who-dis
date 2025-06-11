@@ -365,25 +365,6 @@ if __name__ == "__main__":
         post_karma = "N/A"
 
     if user_comments or user_posts:
-        print("\n--- Latest Reddit Activities ---")
-        # Display a few comments
-        for i, comment in enumerate(user_comments[:3]):
-            print(f"\nComment {i+1} (ID: {comment['id']}) in r/{comment['subreddit']}:")
-            print(f"  Body: {comment['body'][:150]}...")
-            print(f"  Created: {time.ctime(comment['created_utc'])}")
-        # Display a few posts
-        for i, post in enumerate(user_posts[:3]):
-            print(f"\nPost {i+1} (ID: {post['id']}) in r/{post['subreddit']}:")
-            print(f"  Title: {post['title']}")
-            if post['selftext'] and analyze_post_bodies:
-                print(f"  Body: {post['selftext'][:150]}...")
-            elif not analyze_post_bodies:
-                print(f"  Body: (Excluded from display and LLM analysis based on setting)")
-            print(f"  Created: {time.ctime(post['created_utc'])}")
-
-        if len(user_comments) + len(user_posts) > 6:
-            print(f"\n... and more activities (fetched up to {num_comments_to_fetch} comments and {num_posts_to_fetch} posts).")
-
         # Analyze comments and posts with LLM, passing subreddit_descriptions
         llm_analysis = analyze_reddit_activity_with_llm(
             user_comments,
