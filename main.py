@@ -268,7 +268,6 @@ def analyze_reddit_activity_with_llm(
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GOOGLE_API_KEY}"
 
     logging.info(f"\nSending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
-    logging.info(f"LLM prompt:\n{prompt}\n")
 
     try:
         response = requests.post(api_url, headers={'Content-Type': 'application/json'}, json=payload)
