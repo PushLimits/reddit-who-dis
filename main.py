@@ -9,6 +9,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Check required environment variables at startup
+REQUIRED_ENV_VARS = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "GOOGLE_API_KEY"]
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+if missing_vars:
+    print(f"ERROR: The following environment variables are required but not set: {', '.join(missing_vars)}")
+    print("Please set them in your .env file or environment before running this script.")
+    exit(1)
+
 def get_reddit_user_comments(reddit_instance, username, limit=None):
     """
     Fetches the comment history for a given Reddit username.
