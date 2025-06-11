@@ -21,26 +21,16 @@ if missing_vars:
     logging.error("Please set them in your .env file or environment before running this script.")
     exit(1)
 
-def get_reddit_user_comments(reddit_instance, username, limit=None):
-    """
-    Fetches the comment history for a given Reddit username.
-
-    Args:
-        reddit_instance (praw.Reddit): An authenticated PRAW Reddit instance.
-        username (str): The Reddit username whose comments you want to fetch.
-        limit (int, optional): The maximum number of comments to retrieve.
-                               If None, retrieves all available comments.
-                               Defaults to None.
-
-    Returns:
-        list: A list of dictionaries, where each dictionary represents a comment
-              with 'id', 'subreddit', 'link_title', 'body', and 'created_utc' fields.
-              Returns an empty list if the user is not found or has no comments.
-    """
+def fetch_redditor(reddit_instance, username):
     try:
-        redditor = reddit_instance.redditor(username)
-        logging.info(f"Fetching comments for user: {username}...")
-        comments_data = []
+        return reddit_instance.redditor(username)
+    except Exception as e:
+        logging.error(f"Failed to fetch redditor object for {username}: {e}")
+        return None
+
+def fetch_comments(redditor, limit=None):
+    comments_data = []
+    try:
         for i, comment in enumerate(redditor.comments.new(limit=limit)):
             comments_data.append({
                 "id": comment.id,
@@ -48,37 +38,18 @@ def get_reddit_user_comments(reddit_instance, username, limit=None):
                 "subreddit": comment.subreddit.display_name,
                 "link_title": comment.submission.title,
                 "body": comment.body,
-                "created_utc": comment.created_utc  # Store as float for sorting
+                "created_utc": comment.created_utc
             })
             if (i + 1) % 100 == 0:
                 logging.info(f"  Fetched {i + 1} comments so far...")
-        logging.info(f"Successfully fetched {len(comments_data)} comments for {username}.")
-        return comments_data
+        logging.info(f"Successfully fetched {len(comments_data)} comments.")
     except Exception as e:
         logging.error(f"An error occurred during Reddit comment fetching: {e}")
-        return []
+    return comments_data
 
-def get_reddit_user_posts(reddit_instance, username, limit=None):
-    """
-    Fetches the post history (submissions) for a given Reddit username.
-
-    Args:
-        reddit_instance (praw.Reddit): An authenticated PRAW Reddit instance.
-        username (str): The Reddit username whose posts you want to fetch.
-        limit (int, optional): The maximum number of posts to retrieve.
-                               If None, retrieves all available posts.
-                               Defaults to None.
-
-    Returns:
-        list: A list of dictionaries, where each dictionary represents a post
-              with 'id', 'subreddit', 'title', 'selftext', and 'created_utc' fields.
-              Returns an empty list if the user is not found or has no posts.
-    """
+def fetch_posts(redditor, limit=None):
+    posts_data = []
     try:
-        redditor = reddit_instance.redditor(username)
-        logging.info(f"Fetching posts for user: {username}...")
-        posts_data = []
-        # Use redditor.submissions.new() to get submissions (posts)
         for i, submission in enumerate(redditor.submissions.new(limit=limit)):
             posts_data.append({
                 "id": submission.id,
@@ -86,15 +57,26 @@ def get_reddit_user_posts(reddit_instance, username, limit=None):
                 "subreddit": submission.subreddit.display_name,
                 "title": submission.title,
                 "selftext": submission.selftext,
-                "created_utc": submission.created_utc  # Store as float for sorting
+                "created_utc": submission.created_utc
             })
             if (i + 1) % 100 == 0:
                 logging.info(f"  Fetched {i + 1} posts so far...")
-        logging.info(f"Successfully fetched {len(posts_data)} posts for {username}.")
-        return posts_data
+        logging.info(f"Successfully fetched {len(posts_data)} posts.")
     except Exception as e:
         logging.error(f"An error occurred during Reddit post fetching: {e}")
+    return posts_data
+
+def get_reddit_user_comments(reddit_instance, username, limit=None):
+    redditor = fetch_redditor(reddit_instance, username)
+    if not redditor:
         return []
+    return fetch_comments(redditor, limit)
+
+def get_reddit_user_posts(reddit_instance, username, limit=None):
+    redditor = fetch_redditor(reddit_instance, username)
+    if not redditor:
+        return []
+    return fetch_posts(redditor, limit)
 
 def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache_file=".cache/subreddit_descriptions_cache.json"):
     """
@@ -170,6 +152,22 @@ def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache
             logging.warning("Failed to write subreddit description cache.")
     return subreddit_descriptions
 
+def format_activity_for_llm(activity, include_post_bodies, max_post_body_length):
+    if activity["type"] == "comment":
+        return f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}\nCreated: {time.ctime(activity['created_utc'])}"
+    elif activity["type"] == "post":
+        if include_post_bodies and activity["selftext"]:
+            truncated_body = activity["selftext"][:max_post_body_length]
+            return f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nContent: {truncated_body}\nCreated: {time.ctime(activity['created_utc'])}"
+        else:
+            return f"Type: Post (Title Only)\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nCreated: {time.ctime(activity['created_utc'])}"
+    return ""
+
+def format_activities_for_llm(activities, include_post_bodies, max_post_body_length):
+    formatted = [format_activity_for_llm(a, include_post_bodies, max_post_body_length) for a in activities]
+    # Add separator
+    return "\n---\n".join(formatted)
+
 def analyze_reddit_activity_with_llm(
     comments_data,
     posts_data,
@@ -223,31 +221,7 @@ def analyze_reddit_activity_with_llm(
     all_activities.sort(key=lambda x: x['created_utc'], reverse=True)
     activities_for_llm = all_activities[:max_activities_for_llm]
 
-    # When formatting activities for LLM, optionally include human-readable date if desired
-    formatted_activities_for_llm = []
-    for activity in activities_for_llm:
-        if activity["type"] == "comment":
-            formatted_activities_for_llm.append(
-                f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}\nCreated: {time.ctime(activity['created_utc'])}"
-            )
-        elif activity["type"] == "post":
-            if include_post_bodies and activity["selftext"]:
-                truncated_body = activity["selftext"][:max_post_body_length]
-                formatted_activities_for_llm.append(
-                    f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nContent: {truncated_body}\nCreated: {time.ctime(activity['created_utc'])}"
-                )
-            else:
-                formatted_activities_for_llm.append(
-                    f"Type: Post (Title Only)\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nCreated: {time.ctime(activity['created_utc'])}"
-                )
-        # Add a clear separator between activities
-        formatted_activities_for_llm.append("---")
-
-    # Remove the last "---" if it exists
-    if formatted_activities_for_llm and formatted_activities_for_llm[-1] == "---":
-        formatted_activities_for_llm.pop()
-
-    combined_activities_string = "\n\n".join(formatted_activities_for_llm)
+    combined_activities_string = format_activities_for_llm(activities_for_llm, include_post_bodies, max_post_body_length)
 
     # Build subreddit context string if provided
     subreddit_context = ""
