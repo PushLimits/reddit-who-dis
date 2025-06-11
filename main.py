@@ -320,10 +320,10 @@ if __name__ == "__main__":
     max_comment_length = args.max_comment_length
     # -------------------------------------------------
 
-    # --- Reddit API Credentials (still from Environment Variables or hardcoded) ---
+    # --- Reddit API Credentials ---
     CLIENT_ID = os.getenv("REDDIT_CLIENT_ID")
     CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET")
-    USER_AGENT = os.getenv("REDDIT_USER_AGENT", "script:MyRedditActivityAnalyzer:v1.0 (by /u/JoMa4)") # Replace with your Reddit username
+    USER_AGENT = os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0")
     # -----------------------------------------------------------------------------
 
     if not CLIENT_ID or not CLIENT_SECRET:
