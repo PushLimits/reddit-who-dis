@@ -1,79 +1,87 @@
-# Reddit Who Dis
+# Reddit Who Dis 🔍
 
 ## Purpose
 
-**Reddit Who Dis** is a command-line tool that analyzes a Reddit user's public comment and post history using a Large Language Model (LLM, e.g., Google Gemini). It summarizes the user's likely personality, interests, and activity patterns, providing context from the subreddits they participate in.
+**Reddit Who Dis** analyzes a Reddit user's public activity using Large Language Models (currently Google Gemini). It provides insights into:
+- Personality traits and interests
+- Activity patterns and engagement
+- Subreddit participation context
+- Historical behavior analysis
 
-## Installation
+## Quick Start 🚀
 
-1. **Clone the repository:**
+1. **Setup:**
    ```sh
+   # Clone and enter directory
    git clone https://github.com/yourusername/reddit-who-dis.git
    cd reddit-who-dis
-   ```
 
-2. **Install dependencies:**
-   ```sh
+   # Install dependencies (using uv or pip)
    uv pip install -r requirements.txt
+   
+   # Configure environment
+   cp .env.example .env
    ```
-   *(Or use your preferred Python environment manager. [uv](https://github.com/astral-sh/uv) is a fast Python package manager.)*
 
-3. **Set up environment variables:**
-   - Copy the provided `.env` file and fill in your credentials:
-   ```sh
-   cp .env .env.local  # or just edit .env
-   # Then edit .env and add your keys
-   ```
-   - `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`: [Create a Reddit app](https://www.reddit.com/prefs/apps) to get these.
-   - `GOOGLE_API_KEY`: Your Google Gemini API key.
-
-   Example `.env` file:
+2. **Configure API Keys:**
    ```env
-   REDDIT_CLIENT_ID=your_id
-   REDDIT_CLIENT_SECRET=your_secret
-   GOOGLE_API_KEY=your_gemini_key
-   REDDIT_USER_AGENT=script:reddit-who-dis:v1.0
+   REDDIT_CLIENT_ID=your_client_id        # From reddit.com/prefs/apps
+   REDDIT_CLIENT_SECRET=your_secret       # From reddit.com/prefs/apps
+   GOOGLE_API_KEY=your_gemini_key        # Your Google Gemini API key
+   REDDIT_USER_AGENT=reddit-who-dis:v1.0  # Custom user agent
    ```
 
-## Usage
+3. **Run Analysis:**
+   ```sh
+   python main.py USERNAME [options]
+   ```
+
+## Features ✨
+
+- **Smart Caching:** Subreddit descriptions cached for 30 days
+- **Configurable Depth:** Control how much history to analyze
+- **Context Aware:** Includes subreddit descriptions for better analysis
+- **Privacy Focused:** Only processes public data
+- **Rate Limit Friendly:** Respects API limitations
+
+## Usage Options 🛠️
 
 ```sh
-python main.py <reddit_username> [options]
-```
+python main.py <username> [options]
 
-**Options:**
-- `--comments-limit N` : Max number of comments to fetch (default: 50)
-- `--posts-limit N` : Max number of posts to fetch (default: 50)
-- `--include-post-bodies` : Include full post bodies in LLM analysis
-- `--llm-activities-limit N` : Max combined activities to send to LLM (default: 100)
-- `--max-post-body-length N` : Max length of post bodies for LLM (default: 150)
+Options:
+  --comments-limit N        Max comments to analyze (default: 50)
+  --posts-limit N          Max posts to analyze (default: 50)
+  --include-post-bodies    Include full post content in analysis
+  --llm-activities-limit N Max activities for LLM (default: 100)
+  --max-post-body-length N Truncate posts to length (default: 150)
+```
 
 **Example:**
 ```sh
-python main.py spez --comments-limit 100 --posts-limit 100 --include-post-bodies
+python main.py spez --comments-limit 100 --include-post-bodies
 ```
 
-## Caching
+## Important Notes ⚠️
 
-- Subreddit descriptions are cached in `.cache/subreddit_descriptions_cache.json` to avoid repeated API calls and improve performance.
-- Cached descriptions older than 30 days are automatically refreshed.
-- The `.cache/` directory is excluded from source control.
+- **Rate Limits:** Respect Reddit and Google API limits
+- **Privacy:** Only analyzes public data; do not use for harassment
+- **Accuracy:** LLM analyses are interpretations, not facts
+- **Token Limits:** Large histories are analyzed partially
+- **Security:** Never commit API credentials
+- **Cache:** `.cache/` directory stores subreddit data
 
-## Caveats
+## Contributing 🤝
 
-- **API Limits:**  
-  Reddit and Google Gemini APIs have rate limits. Heavy use may result in temporary bans or errors.
-- **Privacy:**  
-  Only public Reddit data is analyzed. Do not use this tool for harassment or privacy violations.
-- **Accuracy:**  
-  LLM-generated summaries are not always accurate or unbiased.
-- **Token Limits:**  
-  If a user has a large history, only the most recent activities are analyzed to fit within LLM token limits.
-- **Subreddit Descriptions:**  
-  Some subreddits may have missing or generic descriptions, which can affect context quality.
-- **Security:**  
-  Never commit your API keys or secrets to source control.
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a Pull Request
+
+## License
+
+[MIT License](LICENSE)
 
 ---
 
-*For questions or contributions, please open an issue or pull request on GitHub.*
+*For support or questions, please [open an issue](https://github.com/yourusername/reddit-who-dis/issues).*
