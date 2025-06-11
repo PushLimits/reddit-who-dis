@@ -177,7 +177,7 @@ def format_activity_for_llm(activity, include_post_bodies, max_post_body_length)
             truncated_body = activity["selftext"][:max_post_body_length]
             return f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nContent: {truncated_body}\nCreated: {time.ctime(activity['created_utc'])}"
         else:
-            return f"Type: Post (Title Only)\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nCreated: {time.ctime(activity['created_utc'])}"
+            return f"Type: Post\nSubreddit: r/{activity['subreddit']}\nTitle: {activity['title']}\nCreated: {time.ctime(activity['created_utc'])}"
     return ""
 
 def format_activities_for_llm(activities, include_post_bodies, max_post_body_length):
@@ -250,12 +250,15 @@ def analyze_reddit_activity_with_llm(
 
     prompt = (
         subreddit_context +
-        "Based on the following Reddit activities (comments and posts), each explicitly labeled with its type and subreddit, "
-        "provide an overview of the user's likely personality, their general interests, "
-        "and any discernible history or common themes in their discussions. "
-        "Pay close attention to the subreddit context and content type (comment vs. post, and whether post body is included) "
-        "when inferring interests and personality traits. "
-        "Keep the summary concise and insightful.\n\n"
+        "Analyze the following Reddit activities for the user. " 
+        "Each activity is labeled with its type and subreddit. "
+        "For comments, a 'Parent Context' field (representing the parent comment) may be included to clarify the user's intent or conversational style. "
+        "User comment bodies and parent contexts may be truncated to a maximum length for efficiency. "
+        "Use the subreddit context, the activity type, the content, and any parent context to infer:\n"
+        "- The user's likely personality traits\n"
+        "- Their general interests\n"
+        "- Any recurring themes or patterns in their discussions\n"
+        "Be concise, insightful, and reference the context provided.\n\n"
         "Reddit Activities:\n"
         f"{combined_activities_string}"
     )
@@ -265,6 +268,7 @@ def analyze_reddit_activity_with_llm(
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GOOGLE_API_KEY}"
 
     logging.info(f"\nSending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
+    logging.info(f"LLM prompt:\n{prompt}\n")
 
     try:
         response = requests.post(api_url, headers={'Content-Type': 'application/json'}, json=payload)

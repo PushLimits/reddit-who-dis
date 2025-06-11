@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["BattlepassHate", "--comments-limit", "50", "--posts-limit", "20", "--llm-activities-limit", "100"]
+            "args": ["NorthernLitUp", "--include-parent-context"]
         }
     ]
 }
