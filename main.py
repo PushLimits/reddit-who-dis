@@ -5,16 +5,20 @@ import requests
 import json
 import argparse # Import the argparse module
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 # Check required environment variables at startup
 REQUIRED_ENV_VARS = ["REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET", "GOOGLE_API_KEY"]
 missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
 if missing_vars:
-    print(f"ERROR: The following environment variables are required but not set: {', '.join(missing_vars)}")
-    print("Please set them in your .env file or environment before running this script.")
+    logging.error(f"The following environment variables are required but not set: {', '.join(missing_vars)}")
+    logging.error("Please set them in your .env file or environment before running this script.")
     exit(1)
 
 def get_reddit_user_comments(reddit_instance, username, limit=None):
@@ -35,7 +39,7 @@ def get_reddit_user_comments(reddit_instance, username, limit=None):
     """
     try:
         redditor = reddit_instance.redditor(username)
-        print(f"Fetching comments for user: {username}...")
+        logging.info(f"Fetching comments for user: {username}...")
         comments_data = []
         for i, comment in enumerate(redditor.comments.new(limit=limit)):
             comments_data.append({
@@ -47,11 +51,11 @@ def get_reddit_user_comments(reddit_instance, username, limit=None):
                 "created_utc": comment.created_utc  # Store as float for sorting
             })
             if (i + 1) % 100 == 0:
-                print(f"  Fetched {i + 1} comments so far...")
-        print(f"Successfully fetched {len(comments_data)} comments for {username}.")
+                logging.info(f"  Fetched {i + 1} comments so far...")
+        logging.info(f"Successfully fetched {len(comments_data)} comments for {username}.")
         return comments_data
     except Exception as e:
-        print(f"An error occurred during Reddit comment fetching: {e}")
+        logging.error(f"An error occurred during Reddit comment fetching: {e}")
         return []
 
 def get_reddit_user_posts(reddit_instance, username, limit=None):
@@ -72,7 +76,7 @@ def get_reddit_user_posts(reddit_instance, username, limit=None):
     """
     try:
         redditor = reddit_instance.redditor(username)
-        print(f"Fetching posts for user: {username}...")
+        logging.info(f"Fetching posts for user: {username}...")
         posts_data = []
         # Use redditor.submissions.new() to get submissions (posts)
         for i, submission in enumerate(redditor.submissions.new(limit=limit)):
@@ -85,11 +89,11 @@ def get_reddit_user_posts(reddit_instance, username, limit=None):
                 "created_utc": submission.created_utc  # Store as float for sorting
             })
             if (i + 1) % 100 == 0:
-                print(f"  Fetched {i + 1} posts so far...")
-        print(f"Successfully fetched {len(posts_data)} posts for {username}.")
+                logging.info(f"  Fetched {i + 1} posts so far...")
+        logging.info(f"Successfully fetched {len(posts_data)} posts for {username}.")
         return posts_data
     except Exception as e:
-        print(f"An error occurred during Reddit post fetching: {e}")
+        logging.error(f"An error occurred during Reddit post fetching: {e}")
         return []
 
 def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache_file=".cache/subreddit_descriptions_cache.json"):
@@ -126,6 +130,7 @@ def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache
         with open(cache_file, "r") as f:
             cache = json.load(f)
     except Exception:
+        logging.info("No cache found or failed to load cache file for subreddit descriptions.")
         pass  # No cache or failed to load
 
     now = time.time()
@@ -149,17 +154,20 @@ def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache
                 subreddit_descriptions[sub] = desc_clean
                 cache[sub] = {"desc": desc_clean, "timestamp": now}
                 updated = True
+                logging.info(f"Fetched description for r/{sub}.")
             except Exception as e:
                 subreddit_descriptions[sub] = "(Could not fetch description)"
                 cache[sub] = {"desc": "(Could not fetch description)", "timestamp": now}
                 updated = True
+                logging.warning(f"Could not fetch description for r/{sub}: {e}")
     # Save updated cache
     if updated:
         try:
             with open(cache_file, "w") as f:
                 json.dump(cache, f)
+            logging.info("Updated subreddit description cache.")
         except Exception:
-            pass  # Ignore cache write errors
+            logging.warning("Failed to write subreddit description cache.")
     return subreddit_descriptions
 
 def analyze_reddit_activity_with_llm(
@@ -188,9 +196,11 @@ def analyze_reddit_activity_with_llm(
     """
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     if not GOOGLE_API_KEY:
+        logging.error("GOOGLE_API_KEY environment variable not set. Please set it before running.")
         return "ERROR: GOOGLE_API_KEY environment variable not set. Please set it before running."
 
     if not comments_data and not posts_data:
+        logging.warning("No comments or posts to analyze.")
         return "No comments or posts to analyze."
 
     # Combine and deduplicate activities, prioritizing recent ones if limiting
@@ -263,7 +273,7 @@ def analyze_reddit_activity_with_llm(
     payload = {"contents": chat_history}
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GOOGLE_API_KEY}"
 
-    print(f"\nSending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
+    logging.info(f"\nSending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
 
     try:
         response = requests.post(api_url, headers={'Content-Type': 'application/json'}, json=payload)
@@ -279,8 +289,10 @@ def analyze_reddit_activity_with_llm(
             return f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
 
     except requests.exceptions.RequestException as e:
+        logging.error(f"An error occurred during LLM API call: {e}")
         return f"An error occurred during LLM API call: {e}"
     except Exception as e:
+        logging.error(f"An unexpected error occurred during LLM analysis: {e}")
         return f"An unexpected error occurred during LLM analysis: {e}"
 
 if __name__ == "__main__":
@@ -315,9 +327,8 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
 
     if not CLIENT_ID or not CLIENT_SECRET:
-        print("ERROR: Please set the REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET environment variables.")
+        logging.error("Please set the REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET environment variables.")
         exit()
-
     try:
         reddit = praw.Reddit(
             client_id=CLIENT_ID,
@@ -325,7 +336,7 @@ if __name__ == "__main__":
             user_agent=USER_AGENT
         )
     except Exception as e:
-        print(f"Failed to initialize PRAW: {e}. Check your Reddit API credentials.")
+        logging.error(f"Failed to initialize PRAW: {e}. Check your Reddit API credentials.")
         exit()
 
     user_comments = get_reddit_user_comments(reddit, target_username, limit=num_comments_to_fetch)
@@ -341,7 +352,7 @@ if __name__ == "__main__":
         comment_karma = redditor.comment_karma
         post_karma = redditor.link_karma
     except Exception as e:
-        print(f"Could not fetch user info: {e}")
+        logging.warning(f"Could not fetch user info: {e}")
         account_creation_date = "N/A"
         comment_karma = "N/A"
         post_karma = "N/A"
@@ -386,4 +397,4 @@ if __name__ == "__main__":
         print(llm_analysis)
 
     else:
-        print(f"No comments or posts found for user '{target_username}' or errors occurred during fetching. Skipping LLM analysis.")
+        logging.warning(f"No comments or posts found for user '{target_username}' or errors occurred during fetching. Skipping LLM analysis.")
