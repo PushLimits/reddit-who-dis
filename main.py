@@ -28,18 +28,32 @@ def fetch_redditor(reddit_instance, username):
         logging.error(f"Failed to fetch redditor object for {username}: {e}")
         return None
 
-def fetch_comments(redditor, limit=None):
+def fetch_comments(redditor, limit=None, include_parent_context=False, max_parent_context_length=200, max_comment_length=500):
     comments_data = []
     try:
         for i, comment in enumerate(redditor.comments.new(limit=limit)):
-            comments_data.append({
+            # Truncate user comment body
+            body = comment.body[:max_comment_length]
+            comment_dict = {
                 "id": comment.id,
                 "type": "comment",
                 "subreddit": comment.subreddit.display_name,
                 "link_title": comment.submission.title,
-                "body": comment.body,
+                "body": body,
                 "created_utc": comment.created_utc
-            })
+            }
+            if include_parent_context:
+                parent_context = None
+                try:
+                    parent = comment.parent()
+                    # Only include parent if it's a comment (not a submission)
+                    if hasattr(parent, 'body'):
+                        parent_context = parent.body[:max_parent_context_length]
+                except Exception as e:
+                    logging.warning(f"Could not fetch parent context for comment {comment.id}: {e}")
+                if parent_context:
+                    comment_dict["parent_context"] = parent_context
+            comments_data.append(comment_dict)
             if (i + 1) % 100 == 0:
                 logging.info(f"  Fetched {i + 1} comments so far...")
         logging.info(f"Successfully fetched {len(comments_data)} comments.")
@@ -66,11 +80,11 @@ def fetch_posts(redditor, limit=None):
         logging.error(f"An error occurred during Reddit post fetching: {e}")
     return posts_data
 
-def get_reddit_user_comments(reddit_instance, username, limit=None):
+def get_reddit_user_comments(reddit_instance, username, limit=None, include_parent_context=False, max_parent_context_length=200, max_comment_length=500):
     redditor = fetch_redditor(reddit_instance, username)
     if not redditor:
         return []
-    return fetch_comments(redditor, limit)
+    return fetch_comments(redditor, limit, include_parent_context, max_parent_context_length, max_comment_length)
 
 def get_reddit_user_posts(reddit_instance, username, limit=None):
     redditor = fetch_redditor(reddit_instance, username)
@@ -154,7 +168,10 @@ def get_subreddit_descriptions(reddit_instance, comments_data, posts_data, cache
 
 def format_activity_for_llm(activity, include_post_bodies, max_post_body_length):
     if activity["type"] == "comment":
-        return f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}\nCreated: {time.ctime(activity['created_utc'])}"
+        parent_str = ""
+        if activity.get("parent_context"):
+            parent_str = f"\nParent Context: {activity['parent_context']}"
+        return f"Type: Comment\nSubreddit: r/{activity['subreddit']}\nContent: {activity['body']}{parent_str}\nCreated: {time.ctime(activity['created_utc'])}"
     elif activity["type"] == "post":
         if include_post_bodies and activity["selftext"]:
             truncated_body = activity["selftext"][:max_post_body_length]
@@ -282,6 +299,12 @@ if __name__ == "__main__":
                         help="Total combined activities (comments + posts) to send to LLM (default: 100).")
     parser.add_argument("--max-post-body-length", type=int, default=150,
                         help="Maximum length of post bodies to include in LLM analysis (default: 150).")
+    parser.add_argument("--include-parent-context", action="store_true",
+                        help="Include parent comment context in user comments (default: False).")
+    parser.add_argument("--max-parent-context-length", type=int, default=200,
+                        help="Maximum length of parent comment context to include (default: 200).")
+    parser.add_argument("--max-comment-length", type=int, default=500,
+                        help="Maximum length of user comment bodies to include (default: 500).")
 
     args = parser.parse_args()
 
@@ -292,6 +315,9 @@ if __name__ == "__main__":
     analyze_post_bodies = args.include_post_bodies
     max_activities_for_llm_input = args.llm_activities_limit
     max_post_body_length = args.max_post_body_length
+    include_parent_context = args.include_parent_context
+    max_parent_context_length = args.max_parent_context_length
+    max_comment_length = args.max_comment_length
     # -------------------------------------------------
 
     # --- Reddit API Credentials (still from Environment Variables or hardcoded) ---
@@ -313,7 +339,14 @@ if __name__ == "__main__":
         logging.error(f"Failed to initialize PRAW: {e}. Check your Reddit API credentials.")
         exit()
 
-    user_comments = get_reddit_user_comments(reddit, target_username, limit=num_comments_to_fetch)
+    user_comments = get_reddit_user_comments(
+        reddit,
+        target_username,
+        limit=num_comments_to_fetch,
+        include_parent_context=include_parent_context,
+        max_parent_context_length=max_parent_context_length,
+        max_comment_length=max_comment_length
+    )
     user_posts = get_reddit_user_posts(reddit, target_username, limit=num_posts_to_fetch)
 
     # Fetch subreddit descriptions for context
