@@ -1,10 +1,13 @@
 """LLM service for analyzing Reddit activity."""
 
-import requests
 import json
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
+import requests
+
 from .models import Comment, Post
+
 
 class LLMService:
     """Service for analyzing Reddit activity using a language model."""
@@ -21,7 +24,7 @@ class LLMService:
         subreddit_descriptions: Optional[Dict[str, str]] = None,
         include_post_bodies: bool = False,
         max_activities: int = 50,
-        max_post_body_length: int = 150
+        max_post_body_length: int = 150,
     ) -> str:
         """Analyze Reddit activity using the LLM."""
         if not comments and not posts:
@@ -64,8 +67,7 @@ class LLMService:
 
         # Create prompt
         prompt = (
-            subreddit_context +
-            "Analyze the following Reddit activities for the user. "
+            subreddit_context + "Analyze the following Reddit activities for the user. "
             "Each activity is labeled with its type and subreddit. "
             "For comments, a 'Parent Context' field (representing the parent comment) may be included to clarify the user's intent or conversational style. "
             "User comment bodies and parent contexts may be truncated to a maximum length for efficiency. "
@@ -88,20 +90,22 @@ class LLMService:
 
         try:
             response = requests.post(
-                self.api_url,
-                headers={'Content-Type': 'application/json'},
-                json=payload
+                self.api_url, headers={"Content-Type": "application/json"}, json=payload
             )
             response.raise_for_status()
             result = response.json()
 
-            if (result.get("candidates") and
-                result["candidates"][0].get("content") and
-                result["candidates"][0]["content"].get("parts") and
-                result["candidates"][0]["content"]["parts"][0].get("text")):
+            if (
+                result.get("candidates")
+                and result["candidates"][0].get("content")
+                and result["candidates"][0]["content"].get("parts")
+                and result["candidates"][0]["content"]["parts"][0].get("text")
+            ):
                 return result["candidates"][0]["content"]["parts"][0]["text"]
             else:
-                return f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
+                return (
+                    f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
+                )
 
         except requests.exceptions.RequestException as e:
             logging.error(f"An error occurred during LLM API call: {e}")
