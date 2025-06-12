@@ -1,12 +1,12 @@
 """Reddit API service for interacting with Reddit."""
 
 import praw
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import logging
-import json
 import os
 import time
 from .models import Comment, Post
+from .cache_manager import CacheManager
 
 class RedditService:
     """Service for interacting with Reddit API."""
@@ -117,66 +117,52 @@ class RedditService:
         self,
         comments: List[Comment],
         posts: List[Post],
-        cache_file: str = ".cache/subreddit_descriptions_cache.json"
+        cache_manager: Optional['CacheManager'] = None,
+        force_refresh: bool = False
     ) -> Dict[str, str]:
-        """Fetch descriptions for subreddits, using a local cache."""
+        """Fetch descriptions for subreddits, using cache if available.
+        
+        Args:
+            comments: List of Comment objects
+            posts: List of Post objects
+            cache_manager: Optional CacheManager instance for caching
+            force_refresh: Whether to force refresh cached descriptions
+            
+        Returns:
+            Dictionary mapping subreddit names to their descriptions
+        """
         unique_subreddits = {comment.subreddit for comment in comments}.union(
             {post.subreddit for post in posts}
         )
+
+        # If no cache manager, return descriptions without caching
+        if not cache_manager:
+            return self._fetch_subreddit_descriptions(unique_subreddits)
+
+        return cache_manager.get_subreddit_descriptions(
+            self.reddit,
+            unique_subreddits,
+            force_refresh=force_refresh
+        )
+
+    def _fetch_subreddit_descriptions(self, subreddits: set[str]) -> Dict[str, str]:
+        """Fetch descriptions for subreddits without caching.
         
-        logging.info(f"Found {len(unique_subreddits)} unique subreddits to fetch descriptions for")
-
-        # Ensure cache directory exists
-        cache_dir = os.path.dirname(cache_file)
-        if cache_dir and not os.path.exists(cache_dir):
-            os.makedirs(cache_dir, exist_ok=True)
-
-        # Load cache if it exists
-        cache = {}
-        try:
-            with open(cache_file, "r") as f:
-                cache = json.load(f)
-        except Exception:
-            logging.info("No cache found or failed to load cache file for subreddit descriptions.")
-
-        now = time.time()
-        THIRTY_DAYS = 30 * 24 * 60 * 60
-        subreddit_descriptions = {}
-        updated = False
-
-        for sub in unique_subreddits:
-            cache_entry = cache.get(sub)
-            needs_refresh = True
-
-            if cache_entry and isinstance(cache_entry, dict):
-                desc = cache_entry.get("desc")
-                ts = cache_entry.get("timestamp", 0)
-                if desc is not None and (now - ts) < THIRTY_DAYS:
-                    subreddit_descriptions[sub] = desc
-                    needs_refresh = False
-
-            if needs_refresh:
-                try:
-                    subreddit = self.reddit.subreddit(sub)
-                    desc = subreddit.public_description or subreddit.description or "(No description available)"
-                    desc_clean = desc.strip().replace("\n", " ")
-                    subreddit_descriptions[sub] = desc_clean
-                    cache[sub] = {"desc": desc_clean, "timestamp": now}
-                    updated = True
-                    logging.info(f"Fetched description for r/{sub}: {desc_clean[:100]}...")
-                except Exception as e:
-                    subreddit_descriptions[sub] = "(Could not fetch description)"
-                    cache[sub] = {"desc": "(Could not fetch description)", "timestamp": now}
-                    updated = True
-                    logging.warning(f"Could not fetch description for r/{sub}: {e}")
-
-        # Save updated cache
-        if updated:
+        Args:
+            subreddits: Set of subreddit names to fetch descriptions for
+            
+        Returns:
+            Dictionary mapping subreddit names to their descriptions
+        """
+        descriptions = {}
+        for sub in subreddits:
             try:
-                with open(cache_file, "w") as f:
-                    json.dump(cache, f)
-                logging.info("Updated subreddit description cache.")
-            except Exception:
-                logging.warning("Failed to write subreddit description cache.")
-                
-        return subreddit_descriptions
+                subreddit = self.reddit.subreddit(sub)
+                desc = subreddit.public_description or subreddit.description or "(No description available)"
+                desc_clean = desc.strip().replace("\n", " ")
+                descriptions[sub] = desc_clean
+                logging.info(f"Fetched description for r/{sub}: {desc_clean[:100]}...")
+            except Exception as e:
+                descriptions[sub] = "(Could not fetch description)"
+                logging.warning(f"Could not fetch description for r/{sub}: {e}")
+        return descriptions

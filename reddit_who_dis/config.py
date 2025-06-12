@@ -22,6 +22,9 @@ class Config:
     reddit_client_secret: str
     reddit_user_agent: str
     google_api_key: str
+    cache_days: int
+    force_refresh: bool
+    use_cache: bool
 
     @classmethod
     def from_env_and_args(cls, args: argparse.Namespace) -> 'Config':
@@ -49,7 +52,10 @@ class Config:
             reddit_client_id=os.getenv("REDDIT_CLIENT_ID"),
             reddit_client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
             reddit_user_agent=os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"),
-            google_api_key=os.getenv("GOOGLE_API_KEY")
+            google_api_key=os.getenv("GOOGLE_API_KEY"),
+            cache_days=args.cache_days,
+            force_refresh=args.force_refresh,
+            use_cache=args.use_cache
         )
 
     @staticmethod
@@ -73,4 +79,10 @@ class Config:
                           help="Maximum length of parent comment context to include (default: 200).")
         parser.add_argument("--max-comment-length", type=int, default=500,
                           help="Maximum length of user comment bodies to include (default: 500).")
+        parser.add_argument("--cache-days", type=int, default=7,
+                          help="Number of days to cache analysis results (default: 7).")
+        parser.add_argument("--force-refresh", action="store_true",
+                          help="Force refresh of cached results (default: False).")
+        parser.add_argument("--no-cache", action="store_false", dest="use_cache", default=True,
+                          help="Disable caching of results (default: False).")
         return parser
