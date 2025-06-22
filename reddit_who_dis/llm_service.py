@@ -15,7 +15,7 @@ class LLMService:
     def __init__(self, api_key: str):
         """Initialize the LLM service with API key."""
         self.api_key = api_key
-        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
 
     def analyze_reddit_activity(
         self,
@@ -83,10 +83,8 @@ class LLMService:
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
 
-        logging.info(
-            f"\nSending {len(activities_for_llm)} combined activities to LLM for analysis "
-            "(this might take a moment)..."
-        )
+        logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
+        logging.debug(f"LLM Prompt:\n{prompt}...\n")
 
         try:
             response = requests.post(
