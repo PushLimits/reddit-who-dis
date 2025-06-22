@@ -44,8 +44,8 @@ class RedditService:
         self,
         redditor: praw.models.Redditor,
         limit: Optional[int] = None,
-        include_parent_context: bool = False,
-        max_parent_context_length: int = 200,
+        include_parent_context: bool = True,
+        max_parent_context_length: int = 500,
         max_comment_length: int = 500,
     ) -> List[Comment]:
         """Fetch comments for a given Reddit user."""
@@ -58,8 +58,14 @@ class RedditService:
                 if include_parent_context:
                     try:
                         parent = comment.parent()
+                        # If parent is a comment, get its body
                         if hasattr(parent, "body"):
                             parent_context = parent.body[:max_parent_context_length]
+                        # If parent is a submission (the post itself), get its title and selftext
+                        elif hasattr(parent, "title") and hasattr(parent, "selftext"):
+                            # Combine title and selftext for context, truncate if needed
+                            combined = f"{parent.title}\n{parent.selftext}"
+                            parent_context = combined[:max_parent_context_length]
                     except Exception as e:
                         logging.warning(
                             f"Could not fetch parent context for comment {comment.id}: {e}"
