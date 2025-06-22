@@ -2,11 +2,18 @@
 """Reddit Who Dis - A tool for analyzing Reddit user activity."""
 
 import logging
+import os
 
 from reddit_who_dis import CacheManager, Config, LLMService, RedditService
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+# Set up dynamic logging level from environment variable
+loglevel = os.environ.get("LOG_LEVEL", "INFO").upper()
+try:
+    loglevel_value = getattr(logging, loglevel)
+except AttributeError:
+    loglevel_value = logging.INFO
+    logging.warning(f"Invalid LOGLEVEL '{loglevel}' specified. Falling back to INFO.")
+logging.basicConfig(level=loglevel_value, format='[%(levelname)s] %(message)s')
 
 
 def main():
@@ -30,14 +37,10 @@ def main():
             config.username, config.__dict__
         )
         if cached_result:
+            logging.info(f"Using cached result for user '{config.username}'.")
+            
             result = cached_result["result"]
-            print("# Reddit User Analysis: u/" + config.username + "\n")
-            print("## General Information\n")
-            print(f"- Account Creation Date: {result['user_info']['creation_date']}")
-            print(f"- Comment Karma: {result['user_info']['comment_karma']}")
-            print(f"- Post Karma: {result['user_info']['post_karma']}\n")
-            print("## Analysis of User's Personality and History\n")
-            print(result["llm_analysis"])
+            print_analysis_results(config.username, result['user_info'], result["llm_analysis"])
             return
 
     # Initialize services
@@ -95,18 +98,22 @@ def main():
             cache_manager.save_result(config.username, config.__dict__, analysis_result)
 
         # Print results
-        print("# Reddit User Analysis: u/" + config.username + "\n")
-        print("## General Information\n")
-        print(f"- Account Creation Date: {user_info['creation_date']}")
-        print(f"- Comment Karma: {user_info['comment_karma']}")
-        print(f"- Post Karma: {user_info['post_karma']}\n")
-        print("## Analysis of User's Personality and History\n")
-        print(llm_analysis)
+        print_analysis_results(config.username, user_info, llm_analysis)
     else:
         logging.warning(
             f"No comments or posts found for user '{config.username}' "
             "or errors occurred during fetching. Skipping LLM analysis."
         )
+
+
+def print_analysis_results(username, user_info, llm_analysis):
+    print("\n# Reddit User Analysis: u/" + username + "\n")
+    print("## General Information\n")
+    print(f"- Account Creation Date: {user_info['creation_date']}")
+    print(f"- Comment Karma: {user_info['comment_karma']}")
+    print(f"- Post Karma: {user_info['post_karma']}\n")
+    print("## Analysis of User's Personality and History\n")
+    print("\n" + llm_analysis + "\n")
 
 
 if __name__ == "__main__":
