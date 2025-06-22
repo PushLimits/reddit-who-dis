@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["Superb6191", "--include-parent-context"]
+            "args": ["InGeekiTrust", "--force-refresh"]
         }
     ]
 }
