@@ -8,32 +8,64 @@
 - Subreddit participation context
 - Historical behavior analysis
 
+## Prompt Format (as of v1.1.0)
+
+The LLM prompt is structured as XML for robust parsing and context separation. All user and subreddit data is sanitized to prevent invalid XML. Example structure:
+
+```
+<RedditAnalysisRequest>
+  <SubredditContexts>
+    <Subreddit name="sub1">Description</Subreddit>
+    ...
+  </SubredditContexts>
+  <Instructions>
+    ...
+  </Instructions>
+  <Activities>
+    <Activity type="comment" subreddit="sub1" created_utc="...">
+      <Content>
+        <Body>...</Body>
+        <ParentContext>...</ParentContext>
+      </Content>
+    </Activity>
+    <Activity type="post" subreddit="sub2" created_utc="...">
+      <Content>
+        <Title>...</Title>
+        <Body>...</Body>
+      </Content>
+    </Activity>
+    ...
+  </Activities>
+</RedditAnalysisRequest>
+```
+
+- All dynamic fields are escaped for XML safety using Python's `html.escape`.
+- The `to_xml` method is implemented on all activity models for robust serialization.
+- Subreddit context is serialized using `subreddit_contexts_to_xml`.
+- No fallback string parsing is used; all serialization is model-driven.
+
 ## Quick Start 🚀
 
 1. **Setup:**
    ```sh
-   # Clone and enter directory
    git clone https://github.com/yourusername/reddit-who-dis.git
    cd reddit-who-dis
-
-   # Install dependencies (using uv or pip)
    uv pip install -r requirements.txt
-   
-   # Configure environment
    cp .env.example .env
    ```
 
 2. **Configure API Keys:**
+   Edit your `.env` file:
    ```env
    REDDIT_CLIENT_ID=your_client_id        # From reddit.com/prefs/apps
    REDDIT_CLIENT_SECRET=your_secret       # From reddit.com/prefs/apps
-   GOOGLE_API_KEY=your_gemini_key        # Your Google Gemini API key
-   REDDIT_USER_AGENT=reddit-who-dis:v1.0  # Custom user agent
+   GOOGLE_API_KEY=your_gemini_key         # Your Google Gemini API key
+   REDDIT_USER_AGENT=reddit-who-dis:v1.1  # Custom user agent
    ```
 
 3. **Run Analysis:**
    ```sh
-   python main.py USERNAME [options]
+   uv run python main.py <username> [options]
    ```
 
 ## Features ✨
@@ -43,6 +75,7 @@
 - **Context Aware:** Includes subreddit descriptions for better analysis
 - **Privacy Focused:** Only processes public data
 - **Rate Limit Friendly:** Respects API limitations
+- **Robust XML Prompt:** All data is sanitized and structured for LLMs
 
 ## Usage Options 🛠️
 
@@ -50,16 +83,22 @@
 python main.py <username> [options]
 
 Options:
-  --comments-limit N        Max comments to analyze (default: 50)
-  --posts-limit N          Max posts to analyze (default: 50)
-  --include-post-bodies    Include full post content in analysis
-  --llm-activities-limit N Max activities for LLM (default: 100)
-  --max-post-body-length N Truncate posts to length (default: 150)
+  --comments-limit N            Max comments to analyze (default: 100)
+  --posts-limit N               Max posts to analyze (default: 50)
+  --include-post-bodies         Include full post bodies in LLM analysis instead of just titles (default: True)
+  --llm-activities-limit N      Total combined activities (comments + posts) to send to LLM (default: 200)
+  --max-post-body-length N      Maximum length of post bodies to include in LLM analysis (default: 500)
+  --include-parent-context      Include parent comment context in user comments (default: True)
+  --max-parent-context-length N Maximum length of parent comment context to include (default: 500)
+  --max-comment-length N        Maximum length of user comment bodies to include (default: 500)
+  --cache-days N                Number of days to cache analysis results (default: 7)
+  --force-refresh               Force refresh of cached results (default: False)
+  --no-cache                    Disable caching of results (default: False)
 ```
 
 **Example:**
 ```sh
-python main.py spez --comments-limit 100 --include-post-bodies
+python main.py spez --comments-limit 100 --include-post-bodies --max-post-body-length 300 --no-cache --force-refresh
 ```
 
 ## Important Notes ⚠️
