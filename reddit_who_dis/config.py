@@ -81,8 +81,8 @@ class Config:
         parser.add_argument(
             "--comments-limit",
             type=int,
-            default=50,
-            help="Maximum number of comments to fetch from Reddit API (default: 50).",
+            default=100,
+            help="Maximum number of comments to fetch from Reddit API (default: 100).",
         )
         parser.add_argument(
             "--posts-limit",
@@ -93,30 +93,32 @@ class Config:
         parser.add_argument(
             "--include-post-bodies",
             action="store_true",
-            help="Include full post bodies in LLM analysis (default: False, only titles).",
+            default=True,
+            help="Include full post bodies in LLM analysis instead of just titles (default: True).",
         )
         parser.add_argument(
             "--llm-activities-limit",
             type=int,
-            default=100,
-            help="Total combined activities (comments + posts) to send to LLM (default: 100).",
+            default=200,
+            help="Total combined activities (comments + posts) to send to LLM (default: 200).",
         )
         parser.add_argument(
             "--max-post-body-length",
             type=int,
-            default=150,
-            help="Maximum length of post bodies to include in LLM analysis (default: 150).",
+            default=500,
+            help="Maximum length of post bodies to include in LLM analysis (default: 500).",
         )
         parser.add_argument(
             "--include-parent-context",
             action="store_true",
-            help="Include parent comment context in user comments (default: False).",
+            default=True,
+            help="Include parent comment context in user comments (default: True).",
         )
         parser.add_argument(
             "--max-parent-context-length",
             type=int,
-            default=200,
-            help="Maximum length of parent comment context to include (default: 200).",
+            default=500,
+            help="Maximum length of parent comment context to include (default: 500).",
         )
         parser.add_argument(
             "--max-comment-length",
@@ -133,6 +135,7 @@ class Config:
         parser.add_argument(
             "--force-refresh",
             action="store_true",
+            default=False,
             help="Force refresh of cached results (default: False).",
         )
         parser.add_argument(
