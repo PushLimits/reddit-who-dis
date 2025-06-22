@@ -1,5 +1,6 @@
 """LLM service for analyzing Reddit activity."""
 
+import html
 import json
 import logging
 from typing import Dict, List, Optional
@@ -49,42 +50,47 @@ class LLMService:
         all_activities.sort(key=lambda x: x.created_utc, reverse=True)
         activities_for_llm = all_activities[:max_activities]
 
-        # Format activities
-        formatted_activities = []
-        for activity in activities_for_llm:
-            formatted_activities.append(
-                activity.format_for_llm(include_post_bodies, max_post_body_length)
-            )
-        combined_activities_string = "\n---\n".join(formatted_activities)
-
-        # Build subreddit context
-        subreddit_context = ""
+        # Build XML subreddit context
+        subreddit_context_xml = ""
         if subreddit_descriptions:
-            subreddit_context = "Subreddit Contexts:\n"
+            subreddit_context_xml = "  <SubredditContexts>\n"
             for sub, desc in subreddit_descriptions.items():
-                subreddit_context += f"- r/{sub}: {desc}\n"
-            subreddit_context += "\n"
+                subreddit_context_xml += f"    <Subreddit name=\"{sub}\">{desc}</Subreddit>\n"
+            subreddit_context_xml += "  </SubredditContexts>\n"
 
-        # Create prompt
+        # XML instructions
+        instructions_xml = (
+            "  <Instructions>\n"
+            "    The following data is provided in XML format, with subreddit contexts, instructions, and user activities clearly separated into distinct tags. "
+            "Each <Activity> element contains attributes for type, subreddit, and creation time, and may include <Content> and <ParentContext> child elements. "
+            "Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer: "
+            "- The user's likely personality traits "
+            "- Their general interests "
+            "- Any recurring themes or patterns in their discussions "
+            "Reference the XML structure for context and be concise and insightful in your analysis.\n"
+            "  </Instructions>\n"
+        )
+
+        # Format activities as XML
+        activities_xml = "  <Activities>\n"
+        for activity in activities_for_llm:
+            activities_xml += activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
+        activities_xml += "  </Activities>\n"
+
+        # Combine XML prompt
         prompt = (
-            subreddit_context + "Analyze the following Reddit activities for the user. "
-            "Each activity is labeled with its type and subreddit. "
-            "For comments, a 'Parent Context' field (representing the parent comment) may be included to clarify the user's intent or conversational style. "
-            "User comment bodies and parent contexts may be truncated to a maximum length for efficiency. "
-            "Use the subreddit context, the activity type, the content, and any parent context to infer:\n"
-            "- The user's likely personality traits\n"
-            "- Their general interests\n"
-            "- Any recurring themes or patterns in their discussions\n"
-            "Be concise, insightful, and reference the context provided.\n\n"
-            "Reddit Activities:\n"
-            f"{combined_activities_string}"
+            "<RedditAnalysisRequest>\n"
+            f"{subreddit_context_xml}"
+            f"{instructions_xml}"
+            f"{activities_xml}"
+            "</RedditAnalysisRequest>"
         )
 
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
 
         logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
-        logging.debug(f"LLM Prompt:\n{prompt}...\n")
+        logging.info(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
             response = requests.post(

@@ -1,6 +1,7 @@
 """Data models for Reddit Who Dis."""
 
 import time
+import html
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,11 +15,14 @@ class RedditActivity:
     created_utc: float
     type: str
 
-    def format_for_llm(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
-        """Format the activity for LLM input."""
-        raise NotImplementedError
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
+        """
+        Serialize the activity as an XML string for LLM prompts.
+        All user/dynamic data is sanitized to prevent invalid XML.
+        Subclasses must override this method to provide their own XML structure.
+        """
+        # Default implementation, should be overridden by subclasses
+        raise NotImplementedError("Subclasses must implement to_xml.")
 
 
 @dataclass
@@ -32,13 +36,24 @@ class Comment(RedditActivity):
     def __post_init__(self):
         self.type = "comment"
 
-    def format_for_llm(
+    def to_xml(
         self, include_post_bodies: bool = False, max_post_body_length: int = 150
     ) -> str:
-        parent_str = (
-            f"\nParent Context: {self.parent_context}" if self.parent_context else ""
+        """
+        Serialize the comment as an XML string for LLM prompts.
+        All user/dynamic data is sanitized to prevent invalid XML.
+        Includes <Body> and optional <ParentContext> fields.
+        """
+        parent_context_xml = (
+            f'<ParentContext>{html.escape(self.parent_context)}</ParentContext>' if self.parent_context else ''
         )
-        return f"Type: Comment\nSubreddit: r/{self.subreddit}\nContent: {self.body}{parent_str}\nCreated: {time.ctime(self.created_utc)}"
+        return (
+            f'<Activity type="comment" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">' 
+            f'<Content>'
+            f'<Body>{html.escape(self.body)}</Body>'
+            f'{parent_context_xml}'
+            f'</Content></Activity>'
+        )
 
 
 @dataclass
@@ -51,10 +66,36 @@ class Post(RedditActivity):
     def __post_init__(self):
         self.type = "post"
 
-    def format_for_llm(
+    def to_xml(
         self, include_post_bodies: bool = False, max_post_body_length: int = 150
     ) -> str:
+        """
+        Serialize the post as an XML string for LLM prompts.
+        All user/dynamic data is sanitized to prevent invalid XML.
+        Includes <Title> and optional <Body> fields.
+        """
+        body_xml = ''
         if include_post_bodies and self.selftext:
             truncated_body = self.selftext[:max_post_body_length]
-            return f"Type: Post\nSubreddit: r/{self.subreddit}\nTitle: {self.title}\nContent: {truncated_body}\nCreated: {time.ctime(self.created_utc)}"
-        return f"Type: Post\nSubreddit: r/{self.subreddit}\nTitle: {self.title}\nCreated: {time.ctime(self.created_utc)}"
+            body_xml = f'<Body>{html.escape(truncated_body)}</Body>'
+        return (
+            f'<Activity type="post" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">' 
+            f'<Content>'
+            f'<Title>{html.escape(self.title)}</Title>'
+            f'{body_xml}'
+            f'</Content></Activity>'
+        )
+
+
+def subreddit_contexts_to_xml(subreddit_descriptions: Optional[dict]) -> str:
+    """
+    Serialize subreddit descriptions to XML for LLM prompts.
+    All user/dynamic data is sanitized to prevent invalid XML.
+    """
+    if not subreddit_descriptions:
+        return ''
+    xml = '  <SubredditContexts>'
+    for sub, desc in subreddit_descriptions.items():
+        xml += f'<Subreddit name="{html.escape(str(sub))}">{html.escape(str(desc))}</Subreddit>'
+    xml += '</SubredditContexts>'
+    return xml
