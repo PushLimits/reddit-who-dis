@@ -2,10 +2,15 @@ import logging
 from typing import Optional
 from openai import OpenAI
 
+
 class TTSService:
     """Service for generating speech audio from text using Kokoro TTS via OpenAI-compatible API."""
 
-    def __init__(self, base_url: str = "http://localhost:8880/v1", default_voice: str = "af_sky+af_bella"):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8880/v1",
+        default_voice: str = "af_sky+af_bella",
+    ):
         """
         Args:
             base_url: Base URL for the local Kokoro TTS server (OpenAI-compatible endpoint).
@@ -14,7 +19,13 @@ class TTSService:
         self.client = OpenAI(base_url=base_url, api_key="not-needed")
         self.default_voice = default_voice
 
-    def synthesize_speech(self, text: str, voice: Optional[str] = None, save_path: Optional[str] = None, stream: bool = False):
+    def synthesize_speech(
+        self,
+        text: str,
+        voice: Optional[str] = None,
+        save_path: Optional[str] = None,
+        stream: bool = False,
+    ):
         """
         Generate speech audio from text, with options to stream (playback), save to file, or return bytes.
 
@@ -44,15 +55,15 @@ class TTSService:
         if stream:
             response_format = "pcm"
         elif save_path:
-            if save_path.endswith('.wav'):
+            if save_path.endswith(".wav"):
                 response_format = "wav"
-            elif save_path.endswith('.mp3'):
+            elif save_path.endswith(".mp3"):
                 response_format = "mp3"
-            elif save_path.endswith('.flac'):
+            elif save_path.endswith(".flac"):
                 response_format = "flac"
-            elif save_path.endswith('.aac'):
+            elif save_path.endswith(".aac"):
                 response_format = "aac"
-            elif save_path.endswith('.opus'):
+            elif save_path.endswith(".opus"):
                 response_format = "opus"
             else:
                 response_format = "mp3"  # Default to mp3 if unknown
@@ -64,7 +75,7 @@ class TTSService:
                 input=text,
                 response_format=response_format,
             ) as response:
-                if stream or (save_path and save_path.endswith('.wav')):
+                if stream or (save_path and save_path.endswith(".wav")):
                     # PCM streaming for playback and/or WAV saving
                     stream_obj = None
                     if stream:
@@ -87,7 +98,7 @@ class TTSService:
                     if stream:
                         stream_obj.stop()
                         stream_obj.close()
-                    if save_path and save_path.endswith('.wav'):
+                    if save_path and save_path.endswith(".wav"):
                         with wave.open(save_path, "wb") as wav_file:
                             wav_file.setnchannels(1)
                             wav_file.setsampwidth(2)

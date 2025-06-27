@@ -84,7 +84,7 @@ class RedditService:
                 )
 
                 if (i + 1) % 100 == 0:
-                    logging.info(f"  Fetched {i + 1} comments so far...")
+                    logging.info(f"Fetched {i + 1} comments so far...")
 
             logging.info(f"Successfully fetched {len(comments)} comments.")
         except Exception as e:
