@@ -21,7 +21,7 @@ class AnalysisRequest(BaseModel):
 @app.post("/analyze")
 def analyze_user(req: AnalysisRequest):
     # Build config dict
-    config_dict = req.dict()
+    config_dict = req.model_dump()
     config_dict.update({
         "reddit_client_id": os.getenv("REDDIT_CLIENT_ID"),
         "reddit_client_secret": os.getenv("REDDIT_CLIENT_SECRET"),
