@@ -97,6 +97,11 @@ class CacheManager:
                 logging.info(
                     f"Cache for user {username} has expired ({cache_age/86400:.1f} days old)"
                 )
+                try:
+                    os.remove(cache_path)
+                    logging.info(f"Deleted expired cache file: {cache_path}")
+                except Exception as e:
+                    logging.warning(f"Failed to delete expired cache file {cache_path}: {e}")
                 return None
 
             logging.info(
