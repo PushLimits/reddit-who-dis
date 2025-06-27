@@ -63,11 +63,16 @@ class LLMService:
             "  <Instructions>\n"
             "    The following data is provided in XML format, with subreddit contexts, instructions, and user activities clearly separated into distinct tags. "
             "Each <Activity> element contains attributes for type, subreddit, and creation time, and may include <Content> and <ParentContext> child elements. "
-            "Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer: "
-            "- The user's likely personality traits "
-            "- Their general interests "
-            "- Any recurring themes or patterns in their discussions "
-            "Reference the XML structure for context and be concise and insightful in your analysis.\n"
+            "The <SubredditContexts> tag contains descriptions of relevant subreddits in <Subreddit> elements. "
+            "Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer the following:\n"
+            "1. The user's likely personality traits.\n"
+            "2. Their general interests.\n"
+            "3. Any recurring themes or patterns in their discussions.\n"
+            "4. How to best engage with this user in future interactions.\n"
+            "Be concise and insightful in your analysis. "
+            "Break down the user activities and their implications effectively into distinct sections."
+            "The output must be in a professional tone, suitable for a report or summary "
+            "The ouput must be in a markdown format.\n"
             "  </Instructions>\n"
         )
 
@@ -90,7 +95,7 @@ class LLMService:
         payload = {"contents": chat_history}
 
         logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
-        logging.info(f"LLM Prompt (XML):\n{prompt}...\n")
+        logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
             response = requests.post(
@@ -117,3 +122,52 @@ class LLMService:
         except Exception as e:
             logging.error(f"An unexpected error occurred during LLM analysis: {e}")
             return f"An unexpected error occurred during LLM analysis: {e}"
+
+    def summarize_analysis(self, full_analysis: str, max_length: int = 350) -> str:
+        """Generate a conversational, concise summary of the analysis for TTS, using an XML prompt structure."""
+        # XML instructions for summary
+        instructions_xml = (
+            "  <Instructions>\n"
+            "    Summarize the following Reddit user analysis in a conversational, professional tone. "
+            "Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a colleague. "
+            f"Limit the summary to about {max_length} words or less.\n"
+            "  </Instructions>\n"
+        )
+        # Wrap the full analysis in XML
+        analysis_xml = (
+            "  <Analysis>\n"
+            f"{html.escape(full_analysis)}\n"
+            "  </Analysis>\n"
+        )
+        # Combine XML prompt
+        prompt = (
+            "<RedditSummaryRequest>\n"
+            f"{instructions_xml}"
+            f"{analysis_xml}"
+            "</RedditSummaryRequest>"
+        )
+        chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
+        payload = {"contents": chat_history}
+        try:
+            response = requests.post(
+                self.api_url, headers={"Content-Type": "application/json"}, json=payload
+            )
+            response.raise_for_status()
+            result = response.json()
+            if (
+                result.get("candidates")
+                and result["candidates"][0].get("content")
+                and result["candidates"][0]["content"].get("parts")
+                and result["candidates"][0]["content"]["parts"][0].get("text")
+            ):
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                return (
+                    f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
+                )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"An error occurred during LLM API call: {e}")
+            return f"An error occurred during LLM API call: {e}"
+        except Exception as e:
+            logging.error(f"An unexpected error occurred during LLM summary: {e}")
+            return f"An unexpected error occurred during LLM summary: {e}"

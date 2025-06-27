@@ -38,9 +38,20 @@ def main():
         )
         if cached_result:
             logging.info(f"Using cached result for user '{config.username}'.")
-            
             result = cached_result["result"]
             print_analysis_results(config.username, result['user_info'], result["llm_analysis"])
+
+            import reddit_who_dis.tts_service as tts_service
+            tts = tts_service.TTSService(default_voice="am_adam(1)+af_heart(3)")
+            tts_text = result.get("llm_analysis_summary") or result["llm_analysis"]
+            try:
+                tts.synthesize_speech(
+                    tts_text,
+                    stream=True
+                )
+                logging.info("LLM analysis audio synthesis completed successfully.")
+            except Exception as e:
+                logging.error(f"Error during TTS synthesis: {e}")
             return
 
     # Initialize services
@@ -93,12 +104,28 @@ def main():
         # Prepare result
         analysis_result = {"user_info": user_info, "llm_analysis": llm_analysis}
 
-        # Save to cache if enabled
-        if config.use_cache:
-            cache_manager.save_result(config.username, config.__dict__, analysis_result)
+        # Generate conversational summary for TTS
+        conversational_summary = llm_service.summarize_analysis(llm_analysis, max_length=350)
+        analysis_result["llm_analysis_summary"] = conversational_summary
 
-        # Print results
+        # Save to cache if enabled
+        cache_manager.save_result(config.username, config.__dict__, analysis_result)
+
         print_analysis_results(config.username, user_info, llm_analysis)
+
+        # TTS: Use conversational summary
+        import reddit_who_dis.tts_service as tts_service
+        tts = tts_service.TTSService(default_voice="am_adam(1)+af_heart(3)")
+        try:
+            tts.synthesize_speech(
+                conversational_summary,
+                stream=True
+            )
+            logging.info("Conversational summary audio synthesis completed successfully.")
+        except Exception as e:
+            logging.error(f"Error during TTS synthesis: {e}")
+            print(f"Error during TTS synthesis: {e}")
+
     else:
         logging.warning(
             f"No comments or posts found for user '{config.username}' "
