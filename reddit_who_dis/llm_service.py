@@ -55,7 +55,9 @@ class LLMService:
         if subreddit_descriptions:
             subreddit_context_xml = "  <SubredditContexts>\n"
             for sub, desc in subreddit_descriptions.items():
-                subreddit_context_xml += f"    <Subreddit name=\"{sub}\">{desc}</Subreddit>\n"
+                subreddit_context_xml += (
+                    f'    <Subreddit name="{sub}">{desc}</Subreddit>\n'
+                )
             subreddit_context_xml += "  </SubredditContexts>\n"
 
         # XML instructions
@@ -79,7 +81,9 @@ class LLMService:
         # Format activities as XML
         activities_xml = "  <Activities>\n"
         for activity in activities_for_llm:
-            activities_xml += activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
+            activities_xml += (
+                activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
+            )
         activities_xml += "  </Activities>\n"
 
         # Combine XML prompt
@@ -94,7 +98,9 @@ class LLMService:
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
 
-        logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
+        logging.info(
+            f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)..."
+        )
         logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
@@ -129,15 +135,13 @@ class LLMService:
         instructions_xml = (
             "  <Instructions>\n"
             "    Summarize the following Reddit user analysis in a conversational, professional tone. "
-            "Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a colleague. "
+            "Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague. "
             f"Limit the summary to about {max_length} words or less.\n"
             "  </Instructions>\n"
         )
         # Wrap the full analysis in XML
         analysis_xml = (
-            "  <Analysis>\n"
-            f"{html.escape(full_analysis)}\n"
-            "  </Analysis>\n"
+            "  <Analysis>\n" f"{html.escape(full_analysis)}\n" "  </Analysis>\n"
         )
         # Combine XML prompt
         prompt = (
