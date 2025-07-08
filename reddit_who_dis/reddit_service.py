@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import praw
 
@@ -15,9 +15,7 @@ class RedditService:
 
     def __init__(self, client_id: str, client_secret: str, user_agent: str):
         """Initialize the Reddit service with API credentials."""
-        self.reddit = praw.Reddit(
-            client_id=client_id, client_secret=client_secret, user_agent=user_agent
-        )
+        self.reddit = praw.Reddit(client_id=client_id, client_secret=client_secret, user_agent=user_agent)
 
     def fetch_redditor(self, username: str) -> Optional[praw.models.Redditor]:
         """Fetch a Reddit user by username."""
@@ -67,9 +65,7 @@ class RedditService:
                             combined = f"{parent.title}\n{parent.selftext}"
                             parent_context = combined[:max_parent_context_length]
                     except Exception as e:
-                        logging.warning(
-                            f"Could not fetch parent context for comment {comment.id}: {e}"
-                        )
+                        logging.warning(f"Could not fetch parent context for comment {comment.id}: {e}")
 
                 comments.append(
                     Comment(
@@ -92,9 +88,7 @@ class RedditService:
 
         return comments
 
-    def fetch_posts(
-        self, redditor: praw.models.Redditor, limit: Optional[int] = None
-    ) -> List[Post]:
+    def fetch_posts(self, redditor: praw.models.Redditor, limit: Optional[int] = None) -> List[Post]:
         """Fetch posts for a given Reddit user."""
         posts = []
         try:
@@ -137,17 +131,13 @@ class RedditService:
         Returns:
             Dictionary mapping subreddit names to their descriptions
         """
-        unique_subreddits = {comment.subreddit for comment in comments}.union(
-            {post.subreddit for post in posts}
-        )
+        unique_subreddits = {comment.subreddit for comment in comments}.union({post.subreddit for post in posts})
 
         # If no cache manager, return descriptions without caching
         if not cache_manager:
             return self._fetch_subreddit_descriptions(unique_subreddits)
 
-        return cache_manager.get_subreddit_descriptions(
-            self.reddit, unique_subreddits, force_refresh=force_refresh
-        )
+        return cache_manager.get_subreddit_descriptions(self.reddit, unique_subreddits, force_refresh=force_refresh)
 
     def _fetch_subreddit_descriptions(self, subreddits: set[str]) -> Dict[str, str]:
         """Fetch descriptions for subreddits without caching.
@@ -162,11 +152,7 @@ class RedditService:
         for sub in subreddits:
             try:
                 subreddit = self.reddit.subreddit(sub)
-                desc = (
-                    subreddit.public_description
-                    or subreddit.description
-                    or "(No description available)"
-                )
+                desc = subreddit.public_description or subreddit.description or "(No description available)"
                 desc_clean = desc.strip().replace("\n", " ")
                 descriptions[sub] = desc_clean
                 logging.info(f"Fetched description for r/{sub}: {desc_clean[:100]}...")

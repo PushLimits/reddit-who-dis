@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from reddit_who_dis import CacheManager, Config, LLMService, RedditService
+from reddit_who_dis import CacheManager, LLMService, RedditService
 import os
 
 app = FastAPI(title="Reddit Who Dis API")
+
 
 class AnalysisRequest(BaseModel):
     username: str
@@ -18,17 +19,20 @@ class AnalysisRequest(BaseModel):
     force_refresh: bool = False
     use_cache: bool = True
 
+
 @app.post("/analyze")
 def analyze_user(req: AnalysisRequest):
     # Build config dict
     config_dict = req.dict()
-    config_dict.update({
-        "reddit_client_id": os.getenv("REDDIT_CLIENT_ID"),
-        "reddit_client_secret": os.getenv("REDDIT_CLIENT_SECRET"),
-        "reddit_user_agent": os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"),
-        "google_api_key": os.getenv("GOOGLE_API_KEY"),
-        "cache_days": int(os.getenv("CACHE_DAYS", 7)),
-    })
+    config_dict.update(
+        {
+            "reddit_client_id": os.getenv("REDDIT_CLIENT_ID"),
+            "reddit_client_secret": os.getenv("REDDIT_CLIENT_SECRET"),
+            "reddit_user_agent": os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"),
+            "google_api_key": os.getenv("GOOGLE_API_KEY"),
+            "cache_days": int(os.getenv("CACHE_DAYS", 7)),
+        }
+    )
 
     # Validate required env vars
     for var in ["reddit_client_id", "reddit_client_secret", "google_api_key"]:
@@ -62,7 +66,10 @@ def analyze_user(req: AnalysisRequest):
     )
     user_posts = reddit_service.fetch_posts(redditor, limit=req.posts_limit)
     subreddit_descriptions = reddit_service.get_subreddit_descriptions(
-        user_comments, user_posts, cache_manager=cache_manager, force_refresh=req.force_refresh
+        user_comments,
+        user_posts,
+        cache_manager=cache_manager,
+        force_refresh=req.force_refresh,
     )
 
     if not (user_comments or user_posts):

@@ -1,6 +1,5 @@
 """LLM service for analyzing Reddit activity."""
 
-import html
 import json
 import logging
 from typing import Dict, List, Optional
@@ -16,7 +15,9 @@ class LLMService:
     def __init__(self, api_key: str):
         """Initialize the LLM service with API key."""
         self.api_key = api_key
-        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        self.api_url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        )
 
     def analyze_reddit_activity(
         self,
@@ -55,7 +56,7 @@ class LLMService:
         if subreddit_descriptions:
             subreddit_context_xml = "  <SubredditContexts>\n"
             for sub, desc in subreddit_descriptions.items():
-                subreddit_context_xml += f"    <Subreddit name=\"{sub}\">{desc}</Subreddit>\n"
+                subreddit_context_xml += f'    <Subreddit name="{sub}">{desc}</Subreddit>\n'
             subreddit_context_xml += "  </SubredditContexts>\n"
 
         # XML instructions
@@ -89,13 +90,13 @@ class LLMService:
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
 
-        logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)...")
+        logging.info(
+            f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)..."
+        )
         logging.info(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
-            response = requests.post(
-                self.api_url, headers={"Content-Type": "application/json"}, json=payload
-            )
+            response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
             response.raise_for_status()
             result = response.json()
 
@@ -107,9 +108,7 @@ class LLMService:
             ):
                 return result["candidates"][0]["content"]["parts"][0]["text"]
             else:
-                return (
-                    f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
-                )
+                return f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
 
         except requests.exceptions.RequestException as e:
             logging.error(f"An error occurred during LLM API call: {e}")

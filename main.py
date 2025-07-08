@@ -13,7 +13,7 @@ try:
 except AttributeError:
     loglevel_value = logging.INFO
     logging.warning(f"Invalid LOGLEVEL '{loglevel}' specified. Falling back to INFO.")
-logging.basicConfig(level=loglevel_value, format='[%(levelname)s] %(message)s')
+logging.basicConfig(level=loglevel_value, format="[%(levelname)s] %(message)s")
 
 
 def main():
@@ -33,14 +33,12 @@ def main():
 
     # Check cache if enabled
     if config.use_cache and not config.force_refresh:
-        cached_result = cache_manager.get_cached_result(
-            config.username, config.__dict__
-        )
+        cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
             logging.info(f"Using cached result for user '{config.username}'.")
-            
+
             result = cached_result["result"]
-            print_analysis_results(config.username, result['user_info'], result["llm_analysis"])
+            print_analysis_results(config.username, result["user_info"], result["llm_analysis"])
             return
 
     # Initialize services
