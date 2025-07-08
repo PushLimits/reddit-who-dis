@@ -3,7 +3,7 @@ name = "reddit-who-dis"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 dependencies = [
     "praw>=7.8.1",
     "python-dotenv>=1.1.0",
@@ -13,4 +13,9 @@ dependencies = [
     "openai>=1.93.1",
     "numpy>=2.3.1",
     "sounddevice>=0.5.2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.1",
 ]

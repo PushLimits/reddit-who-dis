@@ -1,6 +1,5 @@
 """LLM service for analyzing Reddit activity."""
 
-import html
 import json
 import logging
 from typing import Dict, List, Optional

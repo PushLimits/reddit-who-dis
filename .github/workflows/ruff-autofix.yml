@@ -1,0 +1,41 @@
+name: Ruff Check & Format
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    paths:
+      - '**/*.py'
+  workflow_dispatch:
+
+jobs:
+  ruff-autofix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "--version"
+
+      - name: Run Ruff and autofix
+        run: ruff check --fix --exclude '**/__init__.py'
+
+      - name: Run Ruff format
+        run: ruff format --line-length 120
+
+      - name: Commit and push changes (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add .
+            git commit -m "style: autofix with ruff"
+            git push
+          else
+            echo "No changes to commit"
+          fi
