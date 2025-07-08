@@ -63,8 +63,10 @@ class LLMService:
         # XML instructions
         instructions_xml = (
             "<Instructions>\n"
-            "  The following data is provided in XML format, with subreddit contexts, instructions, and user activities clearly separated into distinct tags. "
-            "  Each <Activity> element contains attributes for type, subreddit, and creation time, and may include <Content> and <ParentContext> child elements. "
+            "  The following data is provided in XML format, with subreddit contexts, instructions, and user "
+            "activities clearly separated into distinct tags. "
+            "  Each <Activity> element contains attributes for type, subreddit, and creation time, and may include "
+            "<Content> and <ParentContext> child elements. "
             "  The <SubredditContexts> tag contains descriptions of relevant subreddits in <Subreddit> elements. "
             "  Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer the following:\n"
             "    1. The user's likely personality traits.\n"
@@ -100,7 +102,11 @@ class LLMService:
         logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
-            response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
+            response = requests.post(
+                self.api_url,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+            )
             response.raise_for_status()
             result = response.json()
 
@@ -127,7 +133,8 @@ class LLMService:
         instructions_xml = (
             "<Instructions>\n"
             "  1. Summarize the following Reddit user analysis in a conversational, professional tone.\n"
-            "  2. Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague.\n"
+            "  2. Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken "
+            "overview to a professional colleague.\n"
             f"  3. Limit the summary to {max_length} words or less.\n"
             "</Instructions>\n"
         )
@@ -143,7 +150,11 @@ class LLMService:
         payload = {"contents": chat_history}
 
         try:
-            response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
+            response = requests.post(
+                self.api_url,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+            )
             response.raise_for_status()
             result = response.json()
             if (

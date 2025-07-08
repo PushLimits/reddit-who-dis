@@ -25,11 +25,11 @@ jobs:
       - name: Run Ruff check and format (with autofix on PRs)
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ruff check --fix --exclude '**/__init__.py'
-            ruff format --line-length 120
+            ruff check --fix .
+            ruff format .
           else
-            ruff check --exclude '**/__init__.py'
-            ruff format --check --line-length 120
+            ruff check .
+            ruff format --check .
           fi
 
       - name: Commit and push changes (on pull requests only)
