@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+
 from openai import OpenAI
 
 
@@ -40,9 +41,10 @@ class TTSService:
             If save_path is set and audio is saved successfully, returns the save_path.
             Otherwise, returns None.
         """
+        import wave
+
         import numpy as np
         import sounddevice as sd
-        import wave
 
         voice_name = voice if voice is not None else self.default_voice
         sample_rate = 24000  # Known sample rate for Kokoro PCM

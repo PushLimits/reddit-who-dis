@@ -1,7 +1,9 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
 from reddit_who_dis import CacheManager, LLMService, RedditService
-import os
 
 app = FastAPI(title="Reddit Who Dis API")
 
