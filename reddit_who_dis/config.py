@@ -28,6 +28,7 @@ class Config:
     cache_days: int
     force_refresh: bool
     use_cache: bool
+    use_tts: bool
 
     @classmethod
     def from_env_and_args(cls, args: argparse.Namespace) -> "Config":
@@ -63,6 +64,7 @@ class Config:
             cache_days=args.cache_days,
             force_refresh=args.force_refresh,
             use_cache=args.use_cache,
+            use_tts=args.use_tts,
         )
 
     @staticmethod
@@ -135,6 +137,13 @@ class Config:
             action="store_false",
             dest="use_cache",
             default=True,
-            help="Disable caching of results (default: False).",
+            help="Disable caching of results (caching is enabled by default).",
+        )
+        parser.add_argument(
+            "--no-tts",
+            action="store_false",
+            dest="use_tts",
+            default=True,
+            help="Disable text-to-speech synthesis of the summary (enabled by default).",
         )
         return parser

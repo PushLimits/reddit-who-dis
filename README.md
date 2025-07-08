@@ -73,13 +73,14 @@ uv run python main.py <reddit_username> [options]
 - `--max-parent-context-length N` Maximum length of parent comment context to include (default: 500)
 - `--max-comment-length N`        Maximum length of user comment bodies to include (default: 500)
 - `--cache-days N`                Number of days to cache analysis results (default: 7)
-- `--force-refresh`               Force refresh of cached results (default: False)
-- `--no-cache`                    Disable caching of results (default: False)
+- `--force-refresh`               Force refresh of cached results (disabled by default)
+- `--no-cache`                    Disable caching of results (enabled by default)
+- `--no-tts`                      Disable text-to-speech synthesis of the summary (enabled by default)
 
 #### Example
 
 ```sh
-python main.py spez --comments-limit 100 --include-post-bodies --max-post-body-length 300 --no-cache --force-refresh
+python main.py spez --comments-limit 100 --include-post-bodies --max-post-body-length 300 --no-cache --force-refresh --no-tts
 ```
 
 ## How It Works

@@ -46,12 +46,12 @@ def main():
         cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
             result = cached_result["result"]
-            tts_summary = result.get("tts_summary") or result["full_analysis"]
-
             print_analysis_results(config.username, result["user_info"], result["full_analysis"])
-            print_tts_summary(tts_summary)
 
-            speak_analysis(tts_summary)
+            if config.use_tts:
+                tts_summary = result.get("tts_summary") or result["full_analysis"]
+                print_tts_summary(tts_summary)
+                speak_analysis(tts_summary)
 
             return
 
@@ -120,8 +120,8 @@ def main():
         print_analysis_results(config.username, user_info, full_analysis)
         print_tts_summary(tts_summary)
 
-        speak_analysis(tts_summary)
-
+        if config.use_tts:
+            speak_analysis(tts_summary)
     else:
         logging.warning(
             f"No comments or posts found for user '{config.username}' "
