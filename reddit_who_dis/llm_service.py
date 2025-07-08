@@ -133,18 +133,9 @@ class LLMService:
         )
 
         # Wrap the full analysis in XML
-        analysis_xml = (
-            "<Analysis>\n"
-            f"  {html.escape(full_analysis)}\n"
-            "</Analysis>\n"
-        )
+        analysis_xml = f"<Analysis>\n  {html.escape(full_analysis)}\n</Analysis>\n"
 
-        prompt = (
-            "<RedditSummaryRequest>\n"
-            f"  {instructions_xml}"
-            f"  {analysis_xml}"
-            "</RedditSummaryRequest>"
-        )
+        prompt = f"<RedditSummaryRequest>\n  {instructions_xml}  {analysis_xml}</RedditSummaryRequest>"
 
         logging.debug(f"LLM Summary Prompt (XML):\n{prompt}")
 
