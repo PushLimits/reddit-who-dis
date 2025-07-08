@@ -28,9 +28,7 @@ def analyze_user(req: AnalysisRequest):
         {
             "reddit_client_id": os.getenv("REDDIT_CLIENT_ID"),
             "reddit_client_secret": os.getenv("REDDIT_CLIENT_SECRET"),
-            "reddit_user_agent": os.getenv(
-                "REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"
-            ),
+            "reddit_user_agent": os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"),
             "google_api_key": os.getenv("GOOGLE_API_KEY"),
             "cache_days": int(os.getenv("CACHE_DAYS", 7)),
         }

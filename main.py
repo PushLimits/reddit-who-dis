@@ -43,15 +43,11 @@ def main():
 
     # Check cache if enabled
     if config.use_cache and not config.force_refresh:
-        cached_result = cache_manager.get_cached_result(
-            config.username, config.__dict__
-        )
+        cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
             logging.info(f"Using cached result for user '{config.username}'.")
             result = cached_result["result"]
-            print_analysis_results(
-                config.username, result["user_info"], result["llm_analysis"]
-            )
+            print_analysis_results(config.username, result["user_info"], result["llm_analysis"])
             tts_text = result.get("llm_analysis_summary") or result["llm_analysis"]
             logging.info("Synthesising speech from summarized analysis...")
             speak_analysis(tts_text)
@@ -108,9 +104,7 @@ def main():
         analysis_result = {"user_info": user_info, "llm_analysis": llm_analysis}
 
         # Generate conversational summary for TTS
-        conversational_summary = llm_service.summarize_analysis(
-            llm_analysis, max_length=350
-        )
+        conversational_summary = llm_service.summarize_analysis(llm_analysis, max_length=350)
         analysis_result["llm_analysis_summary"] = conversational_summary
 
         # Save to cache if enabled

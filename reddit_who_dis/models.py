@@ -15,9 +15,7 @@ class RedditActivity:
     created_utc: float
     type: str
 
-    def to_xml(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
         """
         Serialize the activity as an XML string for LLM prompts.
         All user/dynamic data is sanitized to prevent invalid XML.
@@ -38,18 +36,14 @@ class Comment(RedditActivity):
     def __post_init__(self):
         self.type = "comment"
 
-    def to_xml(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
         """
         Serialize the comment as an XML string for LLM prompts.
         All user/dynamic data is sanitized to prevent invalid XML.
         Includes <Body> and optional <ParentContext> fields.
         """
         parent_context_xml = (
-            f"<ParentContext>{html.escape(self.parent_context)}</ParentContext>"
-            if self.parent_context
-            else ""
+            f"<ParentContext>{html.escape(self.parent_context)}</ParentContext>" if self.parent_context else ""
         )
         return (
             f'<Activity type="comment" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
@@ -70,9 +64,7 @@ class Post(RedditActivity):
     def __post_init__(self):
         self.type = "post"
 
-    def to_xml(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
         """
         Serialize the post as an XML string for LLM prompts.
         All user/dynamic data is sanitized to prevent invalid XML.

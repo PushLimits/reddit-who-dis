@@ -16,7 +16,9 @@ class LLMService:
     def __init__(self, api_key: str):
         """Initialize the LLM service with API key."""
         self.api_key = api_key
-        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        self.api_url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        )
 
     def analyze_reddit_activity(
         self,
@@ -55,9 +57,7 @@ class LLMService:
         if subreddit_descriptions:
             subreddit_context_xml = "  <SubredditContexts>\n"
             for sub, desc in subreddit_descriptions.items():
-                subreddit_context_xml += (
-                    f'    <Subreddit name="{sub}">{desc}</Subreddit>\n'
-                )
+                subreddit_context_xml += f'    <Subreddit name="{sub}">{desc}</Subreddit>\n'
             subreddit_context_xml += "  </SubredditContexts>\n"
 
         # XML instructions
@@ -81,9 +81,7 @@ class LLMService:
         # Format activities as XML
         activities_xml = "  <Activities>\n"
         for activity in activities_for_llm:
-            activities_xml += (
-                activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
-            )
+            activities_xml += activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
         activities_xml += "  </Activities>\n"
 
         # Combine XML prompt
@@ -104,9 +102,7 @@ class LLMService:
         logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
-            response = requests.post(
-                self.api_url, headers={"Content-Type": "application/json"}, json=payload
-            )
+            response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
             response.raise_for_status()
             result = response.json()
 
@@ -118,9 +114,7 @@ class LLMService:
             ):
                 return result["candidates"][0]["content"]["parts"][0]["text"]
             else:
-                return (
-                    f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
-                )
+                return f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
 
         except requests.exceptions.RequestException as e:
             logging.error(f"An error occurred during LLM API call: {e}")
@@ -140,22 +134,13 @@ class LLMService:
             "  </Instructions>\n"
         )
         # Wrap the full analysis in XML
-        analysis_xml = (
-            "  <Analysis>\n" f"{html.escape(full_analysis)}\n" "  </Analysis>\n"
-        )
+        analysis_xml = f"  <Analysis>\n{html.escape(full_analysis)}\n  </Analysis>\n"
         # Combine XML prompt
-        prompt = (
-            "<RedditSummaryRequest>\n"
-            f"{instructions_xml}"
-            f"{analysis_xml}"
-            "</RedditSummaryRequest>"
-        )
+        prompt = f"<RedditSummaryRequest>\n{instructions_xml}{analysis_xml}</RedditSummaryRequest>"
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
         try:
-            response = requests.post(
-                self.api_url, headers={"Content-Type": "application/json"}, json=payload
-            )
+            response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
             response.raise_for_status()
             result = response.json()
             if (
@@ -166,9 +151,7 @@ class LLMService:
             ):
                 return result["candidates"][0]["content"]["parts"][0]["text"]
             else:
-                return (
-                    f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
-                )
+                return f"LLM response structure unexpected: {json.dumps(result, indent=2)}"
         except requests.exceptions.RequestException as e:
             logging.error(f"An error occurred during LLM API call: {e}")
             return f"An error occurred during LLM API call: {e}"
