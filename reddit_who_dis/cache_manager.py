@@ -93,6 +93,11 @@ class CacheManager:
             cache_age = time.time() - cache_data.get("timestamp", 0)
             if cache_age > (self.cache_days * 24 * 60 * 60):
                 logging.info(f"Cache for user {username} has expired ({cache_age / 86400:.1f} days old)")
+                try:
+                    os.remove(cache_path)
+                    logging.info(f"Deleted expired cache file: {cache_path}")
+                except Exception as e:
+                    logging.warning(f"Failed to delete expired cache file {cache_path}: {e}")
                 return None
 
             logging.info(f"Using cached analysis for user {username} ({cache_age / 86400:.1f} days old)")
@@ -179,7 +184,7 @@ class CacheManager:
         Returns:
             Dictionary mapping subreddit names to their descriptions.
         """
-        logging.info(f"Found {len(subreddits)} unique subreddits to fetch descriptions for")
+        logging.info(f"Fetching descriptions for {len(subreddits)} subreddits")
 
         # Load cache
         cache = self.get_cached_subreddit_descriptions()

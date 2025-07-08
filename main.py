@@ -13,11 +13,16 @@ try:
 except AttributeError:
     loglevel_value = logging.INFO
     logging.warning(f"Invalid LOGLEVEL '{loglevel}' specified. Falling back to INFO.")
+
 logging.basicConfig(level=loglevel_value, format="[%(levelname)s] %(message)s")
 
 
 def main():
     """Main entry point for the Reddit Who Dis application."""
+
+    logging.info("Starting Reddit Who Dis...")
+    logging.info(f"Using log level: {loglevel}")
+
     # Set up argument parser and get configuration
     parser = Config.setup_arg_parser()
     args = parser.parse_args()
@@ -28,6 +33,11 @@ def main():
         logging.error(str(e))
         exit(1)
 
+    # Log all possible config values passed in from the command line (excluding env vars)
+    logging.debug("Config values from params or default:")
+    for key in vars(args):
+        logging.debug(f"  {key}: {getattr(args, key)}")
+
     # Initialize cache manager
     cache_manager = CacheManager(cache_days=config.cache_days)
 
@@ -35,10 +45,14 @@ def main():
     if config.use_cache and not config.force_refresh:
         cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
-            logging.info(f"Using cached result for user '{config.username}'.")
-
             result = cached_result["result"]
-            print_analysis_results(config.username, result["user_info"], result["llm_analysis"])
+            print_analysis_results(config.username, result["user_info"], result["full_analysis"])
+
+            if config.use_tts:
+                tts_summary = result.get("tts_summary") or result["full_analysis"]
+                print_tts_summary(tts_summary)
+                speak_analysis(tts_summary)
+
             return
 
     # Initialize services
@@ -79,7 +93,7 @@ def main():
 
     if user_comments or user_posts:
         # Analyze comments and posts with LLM
-        llm_analysis = llm_service.analyze_reddit_activity(
+        full_analysis = llm_service.analyze_reddit_activity(
             user_comments,
             user_posts,
             subreddit_descriptions=subreddit_descriptions,
@@ -88,15 +102,26 @@ def main():
             max_post_body_length=config.max_post_body_length,
         )
 
-        # Prepare result
-        analysis_result = {"user_info": user_info, "llm_analysis": llm_analysis}
+        # Prepare payload for caching
+        analysis_payload = {"user_info": user_info, "full_analysis": full_analysis}
+
+        # Generate conversational summary for TTS
+        tts_summary = llm_service.summarize_analysis(full_analysis, max_length=350)
+        analysis_payload["tts_summary"] = tts_summary
 
         # Save to cache if enabled
         if config.use_cache:
-            cache_manager.save_result(config.username, config.__dict__, analysis_result)
+            logging.info("Saving analysis result to cache...")
+        cache_manager.save_result(config.username, config.__dict__, analysis_payload)
+
+        logging.info("Analysis completed successfully.")
 
         # Print results
-        print_analysis_results(config.username, user_info, llm_analysis)
+        print_analysis_results(config.username, user_info, full_analysis)
+        print_tts_summary(tts_summary)
+
+        if config.use_tts:
+            speak_analysis(tts_summary)
     else:
         logging.warning(
             f"No comments or posts found for user '{config.username}' "
@@ -104,14 +129,35 @@ def main():
         )
 
 
-def print_analysis_results(username, user_info, llm_analysis):
+def print_analysis_results(username, user_info, full_analysis):
     print("\n# Reddit User Analysis: u/" + username + "\n")
     print("## General Information\n")
     print(f"- Account Creation Date: {user_info['creation_date']}")
     print(f"- Comment Karma: {user_info['comment_karma']}")
     print(f"- Post Karma: {user_info['post_karma']}\n")
     print("## Analysis of User's Personality and History\n")
-    print("\n" + llm_analysis + "\n")
+    print("\n" + full_analysis + "\n")
+
+
+def print_tts_summary(summary_text):
+    print("\n## Summary for Text-to-Speech (TTS)\n")
+    print(summary_text + "\n")
+
+
+def speak_analysis(summary_text):
+    """Helper to synthesize speech from analysis text using TTSService."""
+    import reddit_who_dis.tts_service as tts_service
+
+    default_voice = "am_adam(1)+af_heart(3)"
+    logging.info(f"Synthesising speech using voice {default_voice}...")
+
+    tts = tts_service.TTSService(default_voice=default_voice)
+
+    try:
+        tts.synthesize_speech(summary_text, stream=True)
+        logging.info("Audio synthesis completed successfully.")
+    except Exception as e:
+        logging.error(f"Error during TTS synthesis: {e}")
 
 
 if __name__ == "__main__":

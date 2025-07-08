@@ -1,7 +1,9 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
 from reddit_who_dis import CacheManager, LLMService, RedditService
-import os
 
 app = FastAPI(title="Reddit Who Dis API")
 
@@ -23,7 +25,7 @@ class AnalysisRequest(BaseModel):
 @app.post("/analyze")
 def analyze_user(req: AnalysisRequest):
     # Build config dict
-    config_dict = req.dict()
+    config_dict = req.model_dump()
     config_dict.update(
         {
             "reddit_client_id": os.getenv("REDDIT_CLIENT_ID"),
