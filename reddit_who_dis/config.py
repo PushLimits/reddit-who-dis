@@ -42,9 +42,7 @@ class Config:
         ]
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
         if missing_vars:
-            error_msg = (
-                f"Missing required environment variables: {', '.join(missing_vars)}"
-            )
+            error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
             logging.error(error_msg)
             raise ValueError(error_msg)
 
@@ -60,9 +58,7 @@ class Config:
             max_comment_length=args.max_comment_length,
             reddit_client_id=os.getenv("REDDIT_CLIENT_ID"),
             reddit_client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-            reddit_user_agent=os.getenv(
-                "REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"
-            ),
+            reddit_user_agent=os.getenv("REDDIT_USER_AGENT", "script:reddit-who-dis:v1.0"),
             google_api_key=os.getenv("GOOGLE_API_KEY"),
             cache_days=args.cache_days,
             force_refresh=args.force_refresh,
@@ -72,12 +68,8 @@ class Config:
     @staticmethod
     def setup_arg_parser() -> argparse.ArgumentParser:
         """Create and return the argument parser for command line arguments."""
-        parser = argparse.ArgumentParser(
-            description="Analyze a Reddit user's comment and post history using an LLM."
-        )
-        parser.add_argument(
-            "username", type=str, help="The Reddit username to analyze."
-        )
+        parser = argparse.ArgumentParser(description="Analyze a Reddit user's comment and post history using an LLM.")
+        parser.add_argument("username", type=str, help="The Reddit username to analyze.")
         parser.add_argument(
             "--comments-limit",
             type=int,

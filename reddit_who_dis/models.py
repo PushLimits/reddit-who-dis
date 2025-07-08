@@ -1,6 +1,5 @@
 """Data models for Reddit Who Dis."""
 
-import time
 import html
 from dataclasses import dataclass
 from typing import Optional
@@ -36,23 +35,21 @@ class Comment(RedditActivity):
     def __post_init__(self):
         self.type = "comment"
 
-    def to_xml(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
         """
         Serialize the comment as an XML string for LLM prompts.
         All user/dynamic data is sanitized to prevent invalid XML.
         Includes <Body> and optional <ParentContext> fields.
         """
         parent_context_xml = (
-            f'<ParentContext>{html.escape(self.parent_context)}</ParentContext>' if self.parent_context else ''
+            f"<ParentContext>{html.escape(self.parent_context)}</ParentContext>" if self.parent_context else ""
         )
         return (
-            f'<Activity type="comment" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">' 
-            f'<Content>'
-            f'<Body>{html.escape(self.body)}</Body>'
-            f'{parent_context_xml}'
-            f'</Content></Activity>'
+            f'<Activity type="comment" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
+            f"<Content>"
+            f"<Body>{html.escape(self.body)}</Body>"
+            f"{parent_context_xml}"
+            f"</Content></Activity>"
         )
 
 
@@ -66,24 +63,22 @@ class Post(RedditActivity):
     def __post_init__(self):
         self.type = "post"
 
-    def to_xml(
-        self, include_post_bodies: bool = False, max_post_body_length: int = 150
-    ) -> str:
+    def to_xml(self, include_post_bodies: bool = False, max_post_body_length: int = 150) -> str:
         """
         Serialize the post as an XML string for LLM prompts.
         All user/dynamic data is sanitized to prevent invalid XML.
         Includes <Title> and optional <Body> fields.
         """
-        body_xml = ''
+        body_xml = ""
         if include_post_bodies and self.selftext:
             truncated_body = self.selftext[:max_post_body_length]
-            body_xml = f'<Body>{html.escape(truncated_body)}</Body>'
+            body_xml = f"<Body>{html.escape(truncated_body)}</Body>"
         return (
-            f'<Activity type="post" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">' 
-            f'<Content>'
-            f'<Title>{html.escape(self.title)}</Title>'
-            f'{body_xml}'
-            f'</Content></Activity>'
+            f'<Activity type="post" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
+            f"<Content>"
+            f"<Title>{html.escape(self.title)}</Title>"
+            f"{body_xml}"
+            f"</Content></Activity>"
         )
 
 
@@ -93,9 +88,9 @@ def subreddit_contexts_to_xml(subreddit_descriptions: Optional[dict]) -> str:
     All user/dynamic data is sanitized to prevent invalid XML.
     """
     if not subreddit_descriptions:
-        return ''
-    xml = '  <SubredditContexts>'
+        return ""
+    xml = "  <SubredditContexts>"
     for sub, desc in subreddit_descriptions.items():
         xml += f'<Subreddit name="{html.escape(str(sub))}">{html.escape(str(desc))}</Subreddit>'
-    xml += '</SubredditContexts>'
+    xml += "</SubredditContexts>"
     return xml
