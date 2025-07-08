@@ -51,9 +51,7 @@ class CacheManager:
         """
         # Remove cache-related keys and sort to ensure consistent hash
         analysis_config = {
-            k: v
-            for k, v in config_dict.items()
-            if k not in ["cache_days", "force_refresh", "use_cache"]
+            k: v for k, v in config_dict.items() if k not in ["cache_days", "force_refresh", "use_cache"]
         }
         config_str = json.dumps(analysis_config, sort_keys=True)
         return hashlib.sha256(config_str.encode()).hexdigest()
@@ -94,14 +92,10 @@ class CacheManager:
             # Check if cache is expired
             cache_age = time.time() - cache_data.get("timestamp", 0)
             if cache_age > (self.cache_days * 24 * 60 * 60):
-                logging.info(
-                    f"Cache for user {username} has expired ({cache_age/86400:.1f} days old)"
-                )
+                logging.info(f"Cache for user {username} has expired ({cache_age / 86400:.1f} days old)")
                 return None
 
-            logging.info(
-                f"Using cached analysis for user {username} ({cache_age/86400:.1f} days old)"
-            )
+            logging.info(f"Using cached analysis for user {username} ({cache_age / 86400:.1f} days old)")
             return cache_data
 
         except Exception as e:
@@ -185,9 +179,7 @@ class CacheManager:
         Returns:
             Dictionary mapping subreddit names to their descriptions.
         """
-        logging.info(
-            f"Found {len(subreddits)} unique subreddits to fetch descriptions for"
-        )
+        logging.info(f"Found {len(subreddits)} unique subreddits to fetch descriptions for")
 
         # Load cache
         cache = self.get_cached_subreddit_descriptions()
@@ -209,18 +201,12 @@ class CacheManager:
             if needs_refresh:
                 try:
                     subreddit = reddit_instance.subreddit(sub)
-                    desc = (
-                        subreddit.public_description
-                        or subreddit.description
-                        or "(No description available)"
-                    )
+                    desc = subreddit.public_description or subreddit.description or "(No description available)"
                     desc_clean = desc.strip().replace("\n", " ")
                     subreddit_descriptions[sub] = desc_clean
                     cache[sub] = {"desc": desc_clean, "timestamp": now}
                     updated = True
-                    logging.info(
-                        f"Fetched description for r/{sub}: {desc_clean[:100]}..."
-                    )
+                    logging.info(f"Fetched description for r/{sub}: {desc_clean[:100]}...")
                 except Exception as e:
                     subreddit_descriptions[sub] = "(Could not fetch description)"
                     cache[sub] = {
