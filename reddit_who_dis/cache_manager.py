@@ -184,7 +184,7 @@ class CacheManager:
         Returns:
             Dictionary mapping subreddit names to their descriptions.
         """
-        logging.info(f"Found {len(subreddits)} unique subreddits to fetch descriptions for")
+        logging.info(f"Fetching descriptions for {len(subreddits)} subreddits")
 
         # Load cache
         cache = self.get_cached_subreddit_descriptions()

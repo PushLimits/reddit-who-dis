@@ -1,5 +1,6 @@
 """LLM service for analyzing Reddit activity."""
 
+import html
 import json
 import logging
 from typing import Dict, List, Optional
@@ -95,9 +96,7 @@ class LLMService:
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
 
-        logging.info(
-            f"Sending {len(activities_for_llm)} combined activities to LLM for analysis."
-        )
+        logging.info(f"Sending {len(activities_for_llm)} combined activities to LLM for analysis.")
         logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
         try:
@@ -127,28 +126,31 @@ class LLMService:
         # XML instructions for summary
         instructions_xml = (
             "<Instructions>\n"
-            "  1. Summarize the following Reddit user analysis in a conversational, professional tone. "
-            "  2. Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague. "
+            "  1. Summarize the following Reddit user analysis in a conversational, professional tone.\n"
+            "  2. Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague.\n"
             f"  3. Limit the summary to {max_length} words or less.\n"
             "</Instructions>\n"
         )
+
         # Wrap the full analysis in XML
         analysis_xml = (
             "<Analysis>\n"
             f"  {html.escape(full_analysis)}\n"
             "</Analysis>\n"
         )
-        
+
         prompt = (
             "<RedditSummaryRequest>\n"
-            f"  {instructions_xml}\n"
-            f"  {analysis_xml}\n"
+            f"  {instructions_xml}"
+            f"  {analysis_xml}"
             "</RedditSummaryRequest>"
         )
-        
+
+        logging.debug(f"LLM Summary Prompt (XML):\n{prompt}")
+
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
-        
+
         try:
             response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
             response.raise_for_status()

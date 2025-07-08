@@ -45,12 +45,13 @@ def main():
     if config.use_cache and not config.force_refresh:
         cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
-            logging.info(f"Using cached result for user '{config.username}'.")
             result = cached_result["result"]
-            print_analysis_results(config.username, result["user_info"], result["full_analysis"])
+            tts_summary = result.get("tts_summary") or result["full_analysis"]
 
-            summary_for_tts = result.get("tts_summary") or result["full_analysis"]
-            speak_analysis(summary_for_tts)
+            print_analysis_results(config.username, result["user_info"], result["full_analysis"])
+            print_tts_summary(tts_summary)
+
+            speak_analysis(tts_summary)
 
             return
 
@@ -114,7 +115,10 @@ def main():
         cache_manager.save_result(config.username, config.__dict__, analysis_payload)
 
         logging.info("Analysis completed successfully.")
+
+        # Print results
         print_analysis_results(config.username, user_info, full_analysis)
+        print_tts_summary(tts_summary)
 
         speak_analysis(tts_summary)
 
@@ -133,6 +137,11 @@ def print_analysis_results(username, user_info, full_analysis):
     print(f"- Post Karma: {user_info['post_karma']}\n")
     print("## Analysis of User's Personality and History\n")
     print("\n" + full_analysis + "\n")
+
+
+def print_tts_summary(summary_text):
+    print("\n## Summary for Text-to-Speech (TTS)\n")
+    print(summary_text + "\n")
 
 
 def speak_analysis(summary_text):
