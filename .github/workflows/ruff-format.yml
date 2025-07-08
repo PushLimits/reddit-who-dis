@@ -21,7 +21,7 @@ jobs:
           args: "--version"
 
       - name: Run Ruff and autofix
-        run: ruff check --fix
+        run: ruff check --fix --ignore '**/__init__.py'
 
       - name: Run Ruff format
         run: ruff format --line-length 120
