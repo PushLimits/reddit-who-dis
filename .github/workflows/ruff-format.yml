@@ -21,7 +21,7 @@ jobs:
         run: ruff check --fix
 
       - name: Run Ruff format
-        run: ruff format
+        run: ruff format --line-length 120
 
       - name: Commit and push changes (if any)
         run: |
