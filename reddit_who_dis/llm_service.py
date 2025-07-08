@@ -55,41 +55,41 @@ class LLMService:
         # Build XML subreddit context
         subreddit_context_xml = ""
         if subreddit_descriptions:
-            subreddit_context_xml = "  <SubredditContexts>\n"
+            subreddit_context_xml = "<SubredditContexts>\n"
             for sub, desc in subreddit_descriptions.items():
-                subreddit_context_xml += f'    <Subreddit name="{sub}">{desc}</Subreddit>\n'
-            subreddit_context_xml += "  </SubredditContexts>\n"
+                subreddit_context_xml += f'  <Subreddit name="{sub}">{desc}</Subreddit>\n'
+            subreddit_context_xml += "</SubredditContexts>\n"
 
         # XML instructions
         instructions_xml = (
-            "  <Instructions>\n"
-            "    The following data is provided in XML format, with subreddit contexts, instructions, and user activities clearly separated into distinct tags. "
-            "Each <Activity> element contains attributes for type, subreddit, and creation time, and may include <Content> and <ParentContext> child elements. "
-            "The <SubredditContexts> tag contains descriptions of relevant subreddits in <Subreddit> elements. "
-            "Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer the following:\n"
-            "1. The user's likely personality traits.\n"
-            "2. Their general interests.\n"
-            "3. Any recurring themes or patterns in their discussions.\n"
-            "4. How to best engage with this user in future interactions.\n"
-            "Be concise and insightful in your analysis. "
-            "Break down the user activities and their implications effectively into distinct sections."
-            "The output must be in a professional tone, suitable for a report or summary "
-            "The ouput must be in a markdown format.\n"
-            "  </Instructions>\n"
+            "<Instructions>\n"
+            "  The following data is provided in XML format, with subreddit contexts, instructions, and user activities clearly separated into distinct tags. "
+            "  Each <Activity> element contains attributes for type, subreddit, and creation time, and may include <Content> and <ParentContext> child elements. "
+            "  The <SubredditContexts> tag contains descriptions of relevant subreddits in <Subreddit> elements. "
+            "  Use the information in <SubredditContexts>, <Instructions>, and <Activities> to infer the following:\n"
+            "    1. The user's likely personality traits.\n"
+            "    2. Their general interests.\n"
+            "    3. Any recurring themes or patterns in their discussions.\n"
+            "    4. How to best engage with this user in future interactions.\n"
+            "  Be concise and insightful in your analysis. "
+            "  Break down the user activities and their implications effectively into distinct sections."
+            "  The output MUST be in a professional tone, suitable for a report or summary "
+            "  The output MUST be in a markdown format.\n"
+            "</Instructions>\n"
         )
 
         # Format activities as XML
-        activities_xml = "  <Activities>\n"
+        activities_xml = "<Activities>\n"
         for activity in activities_for_llm:
             activities_xml += activity.to_xml(include_post_bodies, max_post_body_length) + "\n"
-        activities_xml += "  </Activities>\n"
+        activities_xml += "</Activities>\n"
 
         # Combine XML prompt
         prompt = (
             "<RedditAnalysisRequest>\n"
-            f"{subreddit_context_xml}"
-            f"{instructions_xml}"
-            f"{activities_xml}"
+            f"  {subreddit_context_xml}"
+            f"  {instructions_xml}"
+            f"  {activities_xml}"
             "</RedditAnalysisRequest>"
         )
 
@@ -127,18 +127,29 @@ class LLMService:
         """Generate a conversational, concise summary of the analysis for TTS, using an XML prompt structure."""
         # XML instructions for summary
         instructions_xml = (
-            "  <Instructions>\n"
-            "    Summarize the following Reddit user analysis in a conversational, professional tone. "
-            "Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague. "
-            f"Limit the summary to about {max_length} words or less.\n"
-            "  </Instructions>\n"
+            "<Instructions>\n"
+            "  1. Summarize the following Reddit user analysis in a conversational, professional tone. "
+            "  2. Avoid section headers, markdown, or lists. Make it sound like you're giving a quick spoken overview to a professional colleague. "
+            f"  3. Limit the summary to {max_length} words or less.\n"
+            "</Instructions>\n"
         )
         # Wrap the full analysis in XML
-        analysis_xml = f"  <Analysis>\n{html.escape(full_analysis)}\n  </Analysis>\n"
-        # Combine XML prompt
-        prompt = f"<RedditSummaryRequest>\n{instructions_xml}{analysis_xml}</RedditSummaryRequest>"
+        analysis_xml = (
+            "<Analysis>\n"
+            f"  {html.escape(full_analysis)}\n"
+            "</Analysis>\n"
+        )
+        
+        prompt = (
+            "<RedditSummaryRequest>\n"
+            f"  {instructions_xml}\n"
+            f"  {analysis_xml}\n"
+            "</RedditSummaryRequest>"
+        )
+        
         chat_history = [{"role": "user", "parts": [{"text": prompt}]}]
         payload = {"contents": chat_history}
+        
         try:
             response = requests.post(self.api_url, headers={"Content-Type": "application/json"}, json=payload)
             response.raise_for_status()
