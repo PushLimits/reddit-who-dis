@@ -66,7 +66,10 @@ def analyze_user(req: AnalysisRequest):
     )
     user_posts = reddit_service.fetch_posts(redditor, limit=req.posts_limit)
     subreddit_descriptions = reddit_service.get_subreddit_descriptions(
-        user_comments, user_posts, cache_manager=cache_manager, force_refresh=req.force_refresh
+        user_comments,
+        user_posts,
+        cache_manager=cache_manager,
+        force_refresh=req.force_refresh,
     )
 
     if not (user_comments or user_posts):
