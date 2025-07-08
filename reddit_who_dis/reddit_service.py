@@ -15,7 +15,11 @@ class RedditService:
 
     def __init__(self, client_id: str, client_secret: str, user_agent: str):
         """Initialize the Reddit service with API credentials."""
-        self.reddit = praw.Reddit(client_id=client_id, client_secret=client_secret, user_agent=user_agent)
+        self.reddit = praw.Reddit(
+            client_id=client_id,
+            client_secret=client_secret,
+            user_agent=user_agent,
+        )
 
     def fetch_redditor(self, username: str) -> Optional[praw.models.Redditor]:
         """Fetch a Reddit user by username."""
@@ -36,7 +40,11 @@ class RedditService:
             }
         except Exception as e:
             logging.error(f"Could not fetch user info: {e}")
-            return {"creation_date": "N/A", "comment_karma": "N/A", "post_karma": "N/A"}
+            return {
+                "creation_date": "N/A",
+                "comment_karma": "N/A",
+                "post_karma": "N/A",
+            }
 
     def fetch_comments(
         self,

@@ -42,14 +42,18 @@ class Comment(RedditActivity):
         Includes <Body> and optional <ParentContext> fields.
         """
         parent_context_xml = (
-            f"<ParentContext>{html.escape(self.parent_context)}</ParentContext>" if self.parent_context else ""
+            f"<ParentContext>{html.escape(self.parent_context)}</ParentContext>\n" if self.parent_context else ""
         )
+
         return (
-            f'<Activity type="comment" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
-            f"<Content>"
-            f"<Body>{html.escape(self.body)}</Body>"
-            f"{parent_context_xml}"
-            f"</Content></Activity>"
+            '<Activity type="comment"'
+            f' subreddit="{html.escape(self.subreddit)}"'
+            f' created_utc="{html.escape(str(self.created_utc))}">\n'
+            "  <Content>\n"
+            f"   <Body>{html.escape(self.body)}</Body>\n"
+            f"   {parent_context_xml}"
+            "  </Content>\n"
+            "</Activity>"
         )
 
 
@@ -72,13 +76,15 @@ class Post(RedditActivity):
         body_xml = ""
         if include_post_bodies and self.selftext:
             truncated_body = self.selftext[:max_post_body_length]
-            body_xml = f"<Body>{html.escape(truncated_body)}</Body>"
+            body_xml = f"<Body>{html.escape(truncated_body)}</Body>\n"
         return (
-            f'<Activity type="post" subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
-            f"<Content>"
-            f"<Title>{html.escape(self.title)}</Title>"
-            f"{body_xml}"
-            f"</Content></Activity>"
+            f'<Activity type="post"'
+            f' subreddit="{html.escape(self.subreddit)}" created_utc="{html.escape(str(self.created_utc))}">'
+            "  <Content>\n"
+            f"    <Title>{html.escape(self.title)}</Title>\n"
+            f"    {body_xml}"
+            "  </Content>\n"
+            "</Activity>"
         )
 
 

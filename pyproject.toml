@@ -19,3 +19,24 @@ dependencies = [
 dev = [
     "ruff>=0.12.1",
 ]
+
+[tool.ruff]
+# Set the maximum line length.
+line-length = 120
+
+[tool.ruff.lint]
+# Enable Pyflakes (F), pycodestyle (E, W), and isort (I) rules.
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+# Tell ruff that "reddit_who_dis" is a first-party import. This helps
+# it group your project's imports correctly.
+known-first-party = ["reddit_who_dis"]
+
+[tool.ruff.lint.per-file-ignores]
+# In __init__.py files, import order and unused imports are often
+# intentional to control the package's public API.
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.format]
+# The formatter will automatically sort imports.

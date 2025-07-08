@@ -172,7 +172,10 @@ class CacheManager:
             logging.error(f"Failed to save subreddit description cache: {e}")
 
     def get_subreddit_descriptions(
-        self, reddit_instance: Any, subreddits: set[str], force_refresh: bool = False
+        self,
+        reddit_instance: Any,
+        subreddits: set[str],
+        force_refresh: bool = False,
     ) -> Dict[str, str]:
         """Fetch descriptions for subreddits, using a local cache.
 

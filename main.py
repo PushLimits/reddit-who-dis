@@ -103,7 +103,10 @@ def main():
         )
 
         # Prepare payload for caching
-        analysis_payload = {"user_info": user_info, "full_analysis": full_analysis}
+        analysis_payload = {
+            "user_info": user_info,
+            "full_analysis": full_analysis,
+        }
 
         # Generate conversational summary for TTS
         tts_summary = llm_service.summarize_analysis(full_analysis, max_length=350)
