@@ -1,12 +1,12 @@
 name: Ruff Check & Format
 
 on:
-  push:
-    branches:
-      - '**'
   pull_request:
     paths:
       - '**/*.py'
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -22,13 +22,18 @@ jobs:
         with:
           args: "--version"
 
-      - name: Run Ruff and autofix
-        run: ruff check --fix --exclude '**/__init__.py'
+      - name: Run Ruff check and format (with autofix on PRs)
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            ruff check --fix --exclude '**/__init__.py'
+            ruff format --line-length 120
+          else
+            ruff check --exclude '**/__init__.py'
+            ruff format --check --line-length 120
+          fi
 
-      - name: Run Ruff format
-        run: ruff format --line-length 120
-
-      - name: Commit and push changes (if any)
+      - name: Commit and push changes (on pull requests only)
+        if: github.event_name == 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
