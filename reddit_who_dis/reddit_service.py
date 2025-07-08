@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import praw
 
@@ -35,7 +35,7 @@ class RedditService:
                 "post_karma": redditor.link_karma,
             }
         except Exception as e:
-            logging.warning(f"Could not fetch user info: {e}")
+            logging.error(f"Could not fetch user info: {e}")
             return {"creation_date": "N/A", "comment_karma": "N/A", "post_karma": "N/A"}
 
     def fetch_comments(
@@ -79,8 +79,8 @@ class RedditService:
                     )
                 )
 
-                if (i + 1) % 100 == 0:
-                    logging.info(f"Fetched {i + 1} comments so far...")
+                if (i + 1) % 10 == 0:
+                    logging.debug(f"Fetched {i + 1} comments so far...")
 
             logging.info(f"Successfully fetched {len(comments)} comments.")
         except Exception as e:
@@ -155,7 +155,7 @@ class RedditService:
                 desc = subreddit.public_description or subreddit.description or "(No description available)"
                 desc_clean = desc.strip().replace("\n", " ")
                 descriptions[sub] = desc_clean
-                logging.info(f"Fetched description for r/{sub}: {desc_clean[:100]}...")
+                logging.debug(f"Fetched description for r/{sub}: {desc_clean[:100]}...")
             except Exception as e:
                 descriptions[sub] = "(Could not fetch description)"
                 logging.warning(f"Could not fetch description for r/{sub}: {e}")

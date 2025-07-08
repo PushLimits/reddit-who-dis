@@ -1,6 +1,5 @@
 """Data models for Reddit Who Dis."""
 
-import time
 import html
 from dataclasses import dataclass
 from typing import Optional

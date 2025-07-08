@@ -97,7 +97,7 @@ class LLMService:
         payload = {"contents": chat_history}
 
         logging.info(
-            f"Sending {len(activities_for_llm)} combined activities to LLM for analysis (this might take a moment)..."
+            f"Sending {len(activities_for_llm)} combined activities to LLM for analysis."
         )
         logging.debug(f"LLM Prompt (XML):\n{prompt}...\n")
 
