@@ -72,7 +72,6 @@ class LLMService:
             "patterns.\n"
             "    4. The SUBREDDITCONTEXTS element contains descriptions of relevant subreddits in SUBREDDIT "
             "child elements.\n\n"
-            
             "  Use all of the information in SUBREDDITCONTEXTS and ACTIVITIES to infer the following:\n"
             "    1. The user's likely personality traits.\n"
             "    2. Their general interests.\n"
@@ -84,7 +83,6 @@ class LLMService:
             "    8. Any potential areas of expertise or knowledge they may have.\n"
             "    9. Any potential areas of concern or red flags based on their activity.\n"
             "    10. Any other relevant insights that can be drawn from their activity.\n\n"
-
             "  Use the following guidelines for the analysis:\n"
             "    1. The analysis MUST use the subreddit descriptions to provide context for the user's activities.\n"
             "    2. The analysis MUST use activity upvotes and downvotes to gauge the reception and relevance of "

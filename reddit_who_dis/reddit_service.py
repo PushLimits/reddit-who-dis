@@ -84,7 +84,7 @@ class RedditService:
                         created_utc=comment.created_utc,
                         body=body,
                         link_title=comment.submission.title,
-                        ups= comment.ups,
+                        ups=comment.ups,
                         downs=comment.downs,
                         parent_author=parent_author if parent_context else None,
                         parent_context=parent_context,

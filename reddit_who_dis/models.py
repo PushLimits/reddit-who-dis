@@ -46,13 +46,14 @@ class Comment(RedditActivity):
         Includes <Body> and optional <ParentContext> fields.
         """
         parent_context_xml = (
-            f"<ParentContext author=\"{html.escape(self.parent_author)}\">"
+            f'<ParentContext author="{html.escape(self.parent_author)}">'
             f"{html.escape(self.parent_context)}</ParentContext>\n"
-            if self.parent_context else ""
+            if self.parent_context
+            else ""
         )
 
         dt_object = datetime.datetime.fromtimestamp(self.created_utc)
-        created_date = dt_object.strftime('%Y-%m-%d')
+        created_date = dt_object.strftime("%Y-%m-%d")
 
         return (
             '<Activity type="comment"'
@@ -90,7 +91,7 @@ class Post(RedditActivity):
         body_xml = ""
 
         dt_object = datetime.datetime.fromtimestamp(self.created_utc)
-        created_date = dt_object.strftime('%Y-%m-%d')
+        created_date = dt_object.strftime("%Y-%m-%d")
 
         if include_post_bodies and self.selftext:
             truncated_body = self.selftext[:max_post_body_length]
