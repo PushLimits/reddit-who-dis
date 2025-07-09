@@ -38,7 +38,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [[ -n "$(git status --porcelain)" ]]; then
-            git pull
+            git pull origin HEAD:${GITHUB_HEAD_REF} || true
             git add .
             git commit -m "style: autofix with ruff"
             git push origin HEAD:${GITHUB_HEAD_REF}
