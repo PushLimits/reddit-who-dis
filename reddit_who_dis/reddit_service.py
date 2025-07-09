@@ -34,7 +34,7 @@ class RedditService:
         try:
             redditor = self.reddit.redditor(username)
             return {
-                "creation_date": time.ctime(redditor.created_utc),
+                "creation_date": time.strftime("%Y-%m-%d", time.localtime(redditor.created_utc)),
                 "comment_karma": redditor.comment_karma,
                 "post_karma": redditor.link_karma,
             }
@@ -72,6 +72,8 @@ class RedditService:
                             # Combine title and selftext for context, truncate if needed
                             combined = f"{parent.title}\n{parent.selftext}"
                             parent_context = combined[:max_parent_context_length]
+
+                        parent_author = parent.author.name if parent.author else "deleted"
                     except Exception as e:
                         logging.warning(f"Could not fetch parent context for comment {comment.id}: {e}")
 
@@ -82,6 +84,9 @@ class RedditService:
                         created_utc=comment.created_utc,
                         body=body,
                         link_title=comment.submission.title,
+                        ups= comment.ups,
+                        downs=comment.downs,
+                        parent_author=parent_author if parent_context else None,
                         parent_context=parent_context,
                         type="comment",  # Adding required type parameter
                     )
@@ -108,6 +113,8 @@ class RedditService:
                         created_utc=submission.created_utc,
                         title=submission.title,
                         selftext=submission.selftext,
+                        ups=submission.ups,
+                        downs=submission.downs,
                         type="post",  # Adding required type parameter
                     )
                 )
