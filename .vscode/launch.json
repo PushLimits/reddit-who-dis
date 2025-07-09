@@ -5,11 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Python File",
+            "name": "RedditWhoDis (current file)",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["InGeekiTrust", "--force-refresh"]
+            "args": ["JoMa4", "--force-refresh", "--output-to-file", "--comments-limit", "10", "--posts-limit", "10"],
+        },
+        {
+            "name": "RedditWhoDis (main.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "args": ["JoMa4", "--force-refresh", "--output-to-file", "--comments-limit", "10", "--posts-limit", "10"],
         }
     ]
 }
