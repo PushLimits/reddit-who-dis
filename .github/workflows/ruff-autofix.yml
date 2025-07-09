@@ -4,44 +4,24 @@ on:
   pull_request:
     paths:
       - '**/*.py'
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  ruff-autofix:
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install ruff
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Ruff lint
         uses: astral-sh/ruff-action@v3
         with:
-          args: "--version"
-
-      - name: Run Ruff check and format (with autofix on PRs)
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ruff check --fix .
-            ruff format .
-          else
-            ruff check .
-            ruff format --check .
-          fi
-
-      - name: Commit and push changes (on pull requests only)
-        if: github.event_name == 'pull_request'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git pull origin HEAD:${GITHUB_HEAD_REF} || true
-            git add .
-            git commit -m "style: autofix with ruff"
-            git push origin HEAD:${GITHUB_HEAD_REF}
-          else
-            echo "No changes to commit"
-          fi
+          version: "latest"
+          args: "check --output-format=github"
+      - name: Run Ruff Format
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "latest"
+          args: "format --check --respect-gitignore"
