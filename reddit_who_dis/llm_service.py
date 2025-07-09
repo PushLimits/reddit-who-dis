@@ -17,7 +17,7 @@ class LLMService:
         """Initialize the LLM service with API key."""
         self.api_key = api_key
         self.api_url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={api_key}"
         )
 
     def analyze_reddit_activity(
