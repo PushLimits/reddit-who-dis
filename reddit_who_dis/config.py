@@ -29,6 +29,7 @@ class Config:
     force_refresh: bool
     use_cache: bool
     use_tts: bool
+    output_to_file: bool
 
     @classmethod
     def from_env_and_args(cls, args: argparse.Namespace) -> "Config":
@@ -65,6 +66,7 @@ class Config:
             force_refresh=args.force_refresh,
             use_cache=args.use_cache,
             use_tts=args.use_tts,
+            output_to_file=args.output_to_file,
         )
 
     @staticmethod
@@ -145,5 +147,10 @@ class Config:
             dest="use_tts",
             default=True,
             help="Disable text-to-speech synthesis of the summary (enabled by default).",
+        )
+        parser.add_argument(
+            "--output-to-file",
+            action="store_true",
+            help="Save the generated markdown analysis to a file in the output directory.",
         )
         return parser

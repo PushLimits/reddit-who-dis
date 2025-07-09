@@ -46,7 +46,7 @@ def main():
         cached_result = cache_manager.get_cached_result(config.username, config.__dict__)
         if cached_result:
             result = cached_result["result"]
-            print_analysis_results(config.username, result["user_info"], result["full_analysis"])
+            print_analysis_results(config, result["user_info"], result["full_analysis"])
 
             if config.use_tts:
                 tts_summary = result.get("tts_summary") or result["full_analysis"]
@@ -120,7 +120,7 @@ def main():
         logging.info("Analysis completed successfully.")
 
         # Print results
-        print_analysis_results(config.username, user_info, full_analysis)
+        print_analysis_results(config, user_info, full_analysis)
         print_tts_summary(tts_summary)
 
         if config.use_tts:
@@ -132,14 +132,29 @@ def main():
         )
 
 
-def print_analysis_results(username, user_info, full_analysis):
-    print("\n# Reddit User Analysis: u/" + username + "\n")
-    print("## General Information\n")
-    print(f"- Account Creation Date: {user_info['creation_date']}")
-    print(f"- Comment Karma: {user_info['comment_karma']}")
-    print(f"- Post Karma: {user_info['post_karma']}\n")
-    print("## Analysis of User's Personality and History\n")
-    print("\n" + full_analysis + "\n")
+def print_analysis_results(config, user_info, full_analysis):
+    """Prints or saves the analysis results."""
+    username = config.username
+    output_content = (
+        f"### Reddit User: {username}\n"
+        f"> **Created:** {user_info['creation_date']} | "
+        f"**Comment Karma:** {user_info['comment_karma']} | "
+        f"**Post Karma:** {user_info['post_karma']}\n"
+        f"\n{full_analysis}\n"
+    )
+
+    if config.output_to_file:
+        output_dir = "output"
+        output_file_path = os.path.join(output_dir, f"{username}.md")
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            with open(output_file_path, "w", encoding="utf-8") as f:
+                f.write(output_content)
+            logging.info(f"Analysis results saved to {output_file_path}")
+        except IOError as e:
+            logging.error(f"Error writing to file {output_file_path}: {e}")
+    else:
+        print(output_content)
 
 
 def print_tts_summary(summary_text):
