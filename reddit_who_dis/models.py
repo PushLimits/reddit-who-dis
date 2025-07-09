@@ -46,7 +46,9 @@ class Comment(RedditActivity):
         Includes <Body> and optional <ParentContext> fields.
         """
         parent_context_xml = (
-            f"<ParentContext author=\"{html.escape(self.parent_author)}\">{html.escape(self.parent_context)}</ParentContext>\n" if self.parent_context else ""
+            f"<ParentContext author=\"{html.escape(self.parent_author)}\">"
+            f"{html.escape(self.parent_context)}</ParentContext>\n"
+            if self.parent_context else ""
         )
 
         dt_object = datetime.datetime.fromtimestamp(self.created_utc)
