@@ -88,7 +88,7 @@ class RedditService:
                         downs=comment.downs,
                         parent_author=parent_author if parent_context else None,
                         parent_context=parent_context,
-                        type="comment",  # Adding required type parameter
+                        type="comment",
                     )
                 )
 
@@ -115,7 +115,7 @@ class RedditService:
                         selftext=submission.selftext,
                         ups=submission.ups,
                         downs=submission.downs,
-                        type="post",  # Adding required type parameter
+                        type="post",
                     )
                 )
 
@@ -159,7 +159,6 @@ class RedditService:
 
         Args:
             subreddits: Set of subreddit names to fetch descriptions for
-
         Returns:
             Dictionary mapping subreddit names to their descriptions
         """
