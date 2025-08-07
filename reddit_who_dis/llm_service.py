@@ -15,7 +15,7 @@ class LLMService:
     def __init__(self, api_key: str):
         """Initialize the LLM service with API key."""
         self.api_key = api_key
-        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=api_key)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key)
 
     def analyze_reddit_activity(
         self,
@@ -133,23 +133,25 @@ class LLMService:
             return f"An unexpected error occurred during LLM analysis: {e}"
 
     def summarize_analysis(self, full_analysis: str, max_length: int = 350) -> str:
-        """Generate a conversational, concise summary of the analysis for TTS."""
+        """Generate a direct, concise summary of the analysis for TTS."""
         summary_request = RedditSummaryRequest(full_analysis=full_analysis)
 
         prompt_template = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
-                    "You are an expert summarizer. The user will provide you with a JSON object "
-                    "containing a detailed analysis of a Reddit user. Your task is to create a "
-                    "concise, conversational summary suitable for a text-to-speech (TTS) system.",
+                    "You are an expert summarizer. The user will provide you with a detailed analysis "
+                    "of a Reddit user. Your task is to create a concise summary suitable for a "
+                    "text-to-speech (TTS) system. The output should be a direct summary of the "
+                    "user's profile without any introductory or conversational phrases.",
                 ),
                 (
                     "human",
-                    "Please summarize the following Reddit user analysis in a conversational, "
-                    "professional tone. Avoid section headers, markdown, or lists. Make it sound "
-                    "like you're giving a quick spoken overview to a professional colleague. "
-                    "Limit the summary to {max_length} words or less.\n\n"
+                    "Please summarize the following Reddit user analysis. The summary must be "
+                    "professional, direct, and ready for TTS output. Do not include any "
+                    "conversational filler, introductory remarks (e.g., 'Here is a summary'), "
+                    "section headers, markdown, or lists. The summary should begin directly with "
+                    "the analysis of the user. Limit the summary to {max_length} words or less.\n\n"
                     "Here is the analysis to summarize:\n"
                     "```json\n"
                     "{summary_request}\n"
